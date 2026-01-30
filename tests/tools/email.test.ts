@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createMockFetch } from '../mocks/teamleader.js';
+import { trackEmail, listTrackedEmails, sendInvoice } from '../../src/tools/email.js';
+import { TeamleaderClient } from '../../src/client/teamleader.js';
 
 /**
  * Note: Teamleader Focus API does NOT have a direct emails.send endpoint.
@@ -8,13 +11,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * - quotations.send - Send quotation to customer
  * - emailTracking.create - Track an email sent externally
  * - emailTracking.list - List tracked emails
- * 
- * This test file documents the available alternatives and tests
- * the emailTracking functionality which can be used to log emails
- * sent through other channels.
  */
 
-// Mock email tracking responses
+// Mock responses
 const mockEmailTracking = {
   create: {
     type: 'emailTracking',
@@ -45,8 +44,19 @@ const mockEmailTracking = {
 };
 
 describe('Email Tools', () => {
+  let client: TeamleaderClient;
+
   beforeEach(() => {
     vi.resetAllMocks();
+    const mockFetch = createMockFetch({
+      'emailTracking.create': mockEmailTracking.create,
+      'emailTracking.list': mockEmailTracking.list,
+      'invoices.send': {}, // 204 response
+    });
+    client = new TeamleaderClient({
+      accessToken: 'test-token',
+      fetch: mockFetch as unknown as typeof fetch,
+    });
   });
 
   describe('Teamleader Email Capabilities', () => {
@@ -69,130 +79,152 @@ describe('Email Tools', () => {
 
   describe('teamleader_email_track (emailTracking.create)', () => {
     it('should track an externally sent email', async () => {
-      // This allows logging emails sent through other channels
-      // and linking them to contacts/companies/deals
-      
-      const trackingData = {
+      const result = await trackEmail(client, {
         subject: 'Project Update',
         body: 'Here is the latest update...',
         from: 'sales@company.com',
         to: ['john.doe@example.com'],
         subject_type: 'contact',
-        subject_id: 'contact-uuid-1',
-      };
+        subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+      });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await trackEmail(client, trackingData);
-      
-      // expect(result.type).toBe('emailTracking');
-      // expect(result.id).toBeDefined();
-      
-      expect(mockEmailTracking.create.type).toBe('emailTracking');
+      expect(result.type).toBe('emailTracking');
+      expect(result.id).toBeDefined();
     });
 
     it('should support linking to contact', async () => {
-      const trackingData = {
+      const result = await trackEmail(client, {
         subject: 'Follow-up',
         body: 'Thanks for our meeting...',
         from: 'sales@company.com',
         to: ['client@example.com'],
         subject_type: 'contact',
-        subject_id: 'contact-uuid-1',
-      };
-      
-      expect(trackingData.subject_type).toBe('contact');
-      expect(trackingData.subject_id).toBeDefined();
+        subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+      });
+
+      expect(result.id).toBeDefined();
     });
 
     it('should support linking to company', async () => {
-      const trackingData = {
+      const result = await trackEmail(client, {
         subject: 'Proposal',
         body: 'Please find attached...',
         from: 'sales@company.com',
         to: ['info@client.com'],
         subject_type: 'company',
-        subject_id: 'company-uuid-1',
-      };
-      
-      expect(trackingData.subject_type).toBe('company');
+        subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+      });
+
+      expect(result.id).toBeDefined();
     });
 
     it('should support linking to deal', async () => {
-      const trackingData = {
+      const result = await trackEmail(client, {
         subject: 'Deal Discussion',
         body: 'Regarding our proposal...',
         from: 'sales@company.com',
         to: ['buyer@client.com'],
         subject_type: 'deal',
-        subject_id: 'deal-uuid-1',
-      };
-      
-      expect(trackingData.subject_type).toBe('deal');
+        subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+      });
+
+      expect(result.id).toBeDefined();
+    });
+
+    it('should support CC and BCC recipients', async () => {
+      const result = await trackEmail(client, {
+        subject: 'Team Update',
+        body: 'Update for the team...',
+        from: 'manager@company.com',
+        to: ['team@company.com'],
+        cc: ['boss@company.com'],
+        bcc: ['archive@company.com'],
+        subject_type: 'contact',
+        subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+      });
+
+      expect(result.id).toBeDefined();
+    });
+
+    it('should validate email addresses', async () => {
+      await expect(
+        trackEmail(client, {
+          subject: 'Test',
+          body: 'Test body',
+          from: 'invalid-email',
+          to: ['valid@example.com'],
+          subject_type: 'contact',
+          subject_id: 'f1dfb84c-3c29-4548-9b9b-9090a080742a',
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should validate subject_id is UUID', async () => {
+      await expect(
+        trackEmail(client, {
+          subject: 'Test',
+          body: 'Test body',
+          from: 'valid@example.com',
+          to: ['recipient@example.com'],
+          subject_type: 'contact',
+          subject_id: 'not-a-uuid',
+        })
+      ).rejects.toThrow();
     });
   });
 
   describe('teamleader_emails_list (emailTracking.list)', () => {
     it('should list tracked emails', async () => {
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await listTrackedEmails(client, {});
+      const result = await listTrackedEmails(client, {});
       
-      // expect(result.data).toBeDefined();
-      // expect(result.data[0].subject).toBe('Project Update');
-      
-      expect(mockEmailTracking.list.data).toHaveLength(1);
+      expect(result.data).toBeDefined();
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].subject).toBe('Project Update');
     });
 
     it('should filter by subject (contact/company/deal)', async () => {
-      // Filter by the entity the email is linked to
-      const filter = {
+      const result = await listTrackedEmails(client, {
         subject_type: 'contact',
         subject_id: 'contact-uuid-1',
-      };
+      });
+
+      expect(result.data).toBeDefined();
+    });
+
+    it('should include pagination metadata', async () => {
+      const result = await listTrackedEmails(client, {});
       
-      expect(filter.subject_type).toBe('contact');
+      expect(result.meta?.matches).toBe(1);
+      expect(result.meta?.page.number).toBe(1);
     });
   });
 
-  describe('Alternative: Invoice Sending', () => {
-    it('should document invoice.send capability', () => {
-      // invoices.send endpoint available for sending invoices
-      // Required parameters:
-      // - id: invoice UUID
-      // - recipients: array of { customer/to/cc/bcc }
-      //
-      // This sends the invoice PDF via email
-      
-      const sendInvoiceData = {
-        id: 'invoice-uuid-1',
-        recipients: {
+  describe('Invoice Sending (invoices.send)', () => {
+    it('should send invoice to recipients', async () => {
+      // invoices.send returns 204 (no content)
+      await expect(
+        sendInvoice(client, 'f1dfb84c-3c29-4548-9b9b-9090a080742a', {
           to: [{ email: 'client@example.com', name: 'John Doe' }],
-        },
-      };
-      
-      expect(sendInvoiceData.id).toBeDefined();
-      expect(sendInvoiceData.recipients.to).toHaveLength(1);
+        })
+      ).resolves.not.toThrow();
     });
-  });
 
-  describe('Alternative: Quotation Sending', () => {
-    it('should document quotations.send capability', () => {
-      // quotations.send endpoint available for sending quotations
-      // Required parameters:
-      // - id: quotation UUID
-      // - recipients: email addresses
-      //
-      // This sends the quotation via email
-      
-      const sendQuotationData = {
-        id: 'quotation-uuid-1',
-        recipients: {
-          to: [{ email: 'prospect@example.com' }],
-        },
-      };
-      
-      expect(sendQuotationData.id).toBeDefined();
+    it('should support CC and BCC for invoices', async () => {
+      await expect(
+        sendInvoice(client, 'f1dfb84c-3c29-4548-9b9b-9090a080742a', {
+          to: [{ email: 'client@example.com' }],
+          cc: [{ email: 'accounts@client.com' }],
+          bcc: [{ email: 'archive@company.com' }],
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it('should validate invoice_id is UUID', async () => {
+      await expect(
+        sendInvoice(client, 'not-a-uuid', {
+          to: [{ email: 'client@example.com' }],
+        })
+      ).rejects.toThrow();
     });
   });
 });

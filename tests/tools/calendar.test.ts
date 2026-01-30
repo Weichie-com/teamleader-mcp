@@ -1,110 +1,100 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mockEvents, createMockFetch } from '../mocks/teamleader.js';
-
-// We'll import these once implemented
-// import { listEvents, getEventInfo, createEvent } from '../../src/tools/calendar.js';
-// import { TeamleaderClient } from '../../src/client/teamleader.js';
+import { listEvents, getEventInfo, createEvent } from '../../src/tools/calendar.js';
+import { TeamleaderClient } from '../../src/client/teamleader.js';
 
 describe('Calendar Tools', () => {
+  let mockFetch: ReturnType<typeof createMockFetch>;
+  let client: TeamleaderClient;
+
   beforeEach(() => {
     vi.resetAllMocks();
+    mockFetch = createMockFetch({
+      'events.list': mockEvents.list,
+      'events.info': mockEvents.info,
+      'events.create': mockEvents.create,
+    });
+    client = new TeamleaderClient({
+      accessToken: 'test-token',
+      fetch: mockFetch as unknown as typeof fetch,
+    });
   });
 
   describe('teamleader_events_list', () => {
     it('should list all events without filters', async () => {
-      const mockFetch = createMockFetch({
-        'events.list': mockEvents.list,
-      });
+      const result = await listEvents(client, {});
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await listEvents(client, {});
-      
-      // expect(result).toBeDefined();
-      // expect(result.data).toHaveLength(2);
-      // expect(result.data[0].title).toBe('Team meeting');
-      
-      // Placeholder assertion until implemented
-      expect(mockEvents.list.data).toHaveLength(2);
+      expect(result).toBeDefined();
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].title).toBe('Team meeting');
+      expect(result.data[1].title).toBe('Client call');
     });
 
     it('should filter events by date range', async () => {
-      const mockFetch = createMockFetch({
-        'events.list': mockEvents.list,
+      const result = await listEvents(client, {
+        from: '2026-02-01',
+        to: '2026-02-28',
       });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await listEvents(client, {
-      //   from: '2026-02-01',
-      //   to: '2026-02-28',
-      // });
-      
-      // expect(result.data).toBeDefined();
-      
-      expect(mockEvents.list.data[0].starts_at).toContain('2026-02-01');
+      expect(result.data).toBeDefined();
+      // Mock returns all events, but filter should be passed to API
+      expect(result.data).toHaveLength(2);
     });
 
     it('should filter events by contact_id', async () => {
-      // Filter response to only include events with the contact
-      const filteredEvents = {
-        data: mockEvents.list.data.filter(
-          (e) => e.links.some((l) => l.id === 'contact-uuid-1')
-        ),
-        meta: { page: { size: 20, number: 1 }, matches: 1 },
-      };
+      const contactUuid = 'f1dfb84c-3c29-4548-9b9b-9090a080742a';
       
-      const mockFetch = createMockFetch({
-        'events.list': filteredEvents,
+      // Create client with filtered response
+      const filteredMockFetch = createMockFetch({
+        'events.list': {
+          data: [mockEvents.list.data[0]], // First event has contact link
+          meta: { page: { size: 20, number: 1 }, matches: 1 },
+        },
       });
+      const filteredClient = new TeamleaderClient({
+        accessToken: 'test-token',
+        fetch: filteredMockFetch as unknown as typeof fetch,
+      });
+
+      const result = await listEvents(filteredClient, { contact_id: contactUuid });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await listEvents(client, { contact_id: 'contact-uuid-1' });
-      
-      // expect(result.data).toHaveLength(1);
-      // expect(result.data[0].links[0].id).toBe('contact-uuid-1');
-      
-      expect(filteredEvents.data).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
     });
 
     it('should handle pagination metadata', async () => {
-      const mockFetch = createMockFetch({
-        'events.list': mockEvents.list,
-      });
+      const result = await listEvents(client, {});
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await listEvents(client, {});
+      expect(result.meta?.matches).toBe(2);
+      expect(result.meta?.page.number).toBe(1);
+      expect(result.meta?.page.size).toBe(20);
+    });
+
+    it('should pass page options', async () => {
+      const result = await listEvents(client, {}, { size: 10, number: 2 });
       
-      // expect(result.meta.matches).toBe(2);
-      // expect(result.meta.page.number).toBe(1);
-      
-      expect(mockEvents.list.meta.matches).toBe(2);
+      expect(result.data).toBeDefined();
+    });
+
+    it('should validate filter with invalid contact_id format', async () => {
+      await expect(
+        listEvents(client, { contact_id: 'invalid-not-uuid' })
+      ).rejects.toThrow();
     });
   });
 
   describe('teamleader_event_info', () => {
     it('should get event details by id', async () => {
-      const mockFetch = createMockFetch({
-        'events.info': mockEvents.info,
-      });
+      const result = await getEventInfo(client, 'f1dfb84c-3c29-4548-9b9b-9090a080742a');
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await getEventInfo(client, 'event-uuid-1');
-      
-      // expect(result.data.id).toBe('event-uuid-1');
-      // expect(result.data.title).toBe('Team meeting');
-      // expect(result.data.starts_at).toBe('2026-02-01T10:00:00+01:00');
-      
-      expect(mockEvents.info.data.id).toBe('event-uuid-1');
+      expect(result.data.id).toBe('event-uuid-1');
+      expect(result.data.title).toBe('Team meeting');
+      expect(result.data.starts_at).toBe('2026-02-01T10:00:00+01:00');
     });
 
     it('should include all event fields', async () => {
-      const event = mockEvents.info.data;
+      const result = await getEventInfo(client, 'f1dfb84c-3c29-4548-9b9b-9090a080742a');
+      const event = result.data;
       
-      // Verify all expected fields exist
       expect(event).toHaveProperty('id');
       expect(event).toHaveProperty('title');
       expect(event).toHaveProperty('description');
@@ -116,94 +106,86 @@ describe('Calendar Tools', () => {
       expect(event).toHaveProperty('creator');
     });
 
+    it('should validate id is a UUID', async () => {
+      await expect(getEventInfo(client, 'invalid')).rejects.toThrow();
+    });
+
     it('should handle non-existent event', async () => {
-      const mockFetch = createMockFetch({});
-      
-      // TODO: Implement and test error handling
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // await expect(getEventInfo(client, 'non-existent')).rejects.toThrow();
-      
-      expect(true).toBe(true); // Placeholder
+      const errorClient = new TeamleaderClient({
+        accessToken: 'test-token',
+        fetch: createMockFetch({}) as unknown as typeof fetch,
+      });
+
+      await expect(
+        getEventInfo(errorClient, 'f1dfb84c-3c29-4548-9b9b-9090a0807000')
+      ).rejects.toThrow();
     });
   });
 
   describe('teamleader_event_create', () => {
     it('should create a new event with required fields', async () => {
-      const mockFetch = createMockFetch({
-        'events.create': mockEvents.create,
+      const result = await createEvent(client, {
+        title: 'New Event',
+        starts_at: '2026-02-15T09:00:00+01:00',
+        ends_at: '2026-02-15T10:00:00+01:00',
       });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await createEvent(client, {
-      //   title: 'New Event',
-      //   starts_at: '2026-02-15T09:00:00+01:00',
-      //   ends_at: '2026-02-15T10:00:00+01:00',
-      // });
-      
-      // expect(result.type).toBe('event');
-      // expect(result.id).toBe('event-uuid-new');
-      
-      expect(mockEvents.create.type).toBe('event');
-      expect(mockEvents.create.id).toBeDefined();
+      expect(result.type).toBe('event');
+      expect(result.id).toBe('event-uuid-new');
     });
 
     it('should create event with optional contact links', async () => {
-      const mockFetch = createMockFetch({
-        'events.create': mockEvents.create,
+      const result = await createEvent(client, {
+        title: 'Client Meeting',
+        starts_at: '2026-02-15T09:00:00+01:00',
+        ends_at: '2026-02-15T10:00:00+01:00',
+        contact_ids: ['f1dfb84c-3c29-4548-9b9b-9090a080742a', 'f1dfb84c-3c29-4548-9b9b-9090a080742b'],
       });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await createEvent(client, {
-      //   title: 'Client Meeting',
-      //   starts_at: '2026-02-15T09:00:00+01:00',
-      //   ends_at: '2026-02-15T10:00:00+01:00',
-      //   contact_ids: ['contact-uuid-1', 'contact-uuid-2'],
-      // });
-      
-      // expect(result.id).toBeDefined();
-      
-      expect(mockEvents.create.id).toBe('event-uuid-new');
+      expect(result.id).toBeDefined();
     });
 
     it('should create event with description', async () => {
-      const mockFetch = createMockFetch({
-        'events.create': mockEvents.create,
+      const result = await createEvent(client, {
+        title: 'Planning Session',
+        starts_at: '2026-02-15T09:00:00+01:00',
+        ends_at: '2026-02-15T10:00:00+01:00',
+        description: 'Q1 planning meeting',
       });
       
-      // TODO: Implement and test
-      // const client = new TeamleaderClient({ accessToken: 'test-token', fetch: mockFetch });
-      // const result = await createEvent(client, {
-      //   title: 'Planning Session',
-      //   starts_at: '2026-02-15T09:00:00+01:00',
-      //   ends_at: '2026-02-15T10:00:00+01:00',
-      //   description: 'Q1 planning meeting',
-      // });
-      
-      // expect(result.id).toBeDefined();
-      
-      expect(true).toBe(true); // Placeholder
+      expect(result.id).toBeDefined();
     });
 
-    it('should validate required fields', async () => {
-      // TODO: Implement validation tests
-      // const client = new TeamleaderClient({ accessToken: 'test-token' });
+    it('should create event with location', async () => {
+      const result = await createEvent(client, {
+        title: 'Office Meeting',
+        starts_at: '2026-02-15T09:00:00+01:00',
+        ends_at: '2026-02-15T10:00:00+01:00',
+        location: 'Conference Room A',
+      });
       
-      // await expect(createEvent(client, {
-      //   // Missing title
-      //   starts_at: '2026-02-15T09:00:00+01:00',
-      //   ends_at: '2026-02-15T10:00:00+01:00',
-      // })).rejects.toThrow();
-      
-      expect(true).toBe(true); // Placeholder
+      expect(result.id).toBeDefined();
     });
 
-    it('should validate datetime format', async () => {
-      // TODO: Implement validation tests
-      // Invalid datetime should throw
-      
-      expect(true).toBe(true); // Placeholder
+    it('should validate required fields - missing title', async () => {
+      await expect(
+        createEvent(client, {
+          title: '', // Empty title
+          starts_at: '2026-02-15T09:00:00+01:00',
+          ends_at: '2026-02-15T10:00:00+01:00',
+        })
+      ).rejects.toThrow();
+    });
+
+    it('should validate contact_ids are UUIDs', async () => {
+      await expect(
+        createEvent(client, {
+          title: 'Test Event',
+          starts_at: '2026-02-15T09:00:00+01:00',
+          ends_at: '2026-02-15T10:00:00+01:00',
+          contact_ids: ['not-a-uuid'],
+        })
+      ).rejects.toThrow();
     });
   });
 });
