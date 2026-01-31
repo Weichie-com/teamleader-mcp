@@ -895,6 +895,750 @@ export const mockQuotations = {
 };
 
 // ============================================================================
+// COMPANIES MOCKS - Based on official API structure
+// ============================================================================
+
+export const mockCompanies = {
+  list: {
+    data: [
+      {
+        id: 'company-uuid-1',
+        name: 'Acme Corporation',
+        status: 'active',
+        business_type: {
+          type: 'businessType',
+          id: 'business-type-uuid-1',
+        },
+        vat_number: 'BE0899623035',
+        national_identification_number: '63326426',
+        emails: [
+          {
+            type: 'primary',
+            email: 'info@acme.com',
+          },
+          {
+            type: 'invoicing',
+            email: 'invoices@acme.com',
+          },
+        ],
+        telephones: [
+          {
+            type: 'phone',
+            number: '+32 2 123 45 67',
+          },
+        ],
+        website: 'https://acme.com',
+        primary_address: {
+          line_1: 'Main Street 100',
+          postal_code: '1000',
+          city: 'Brussels',
+          country: 'BE',
+        },
+        iban: 'BE12123412341234',
+        bic: 'BICBANK',
+        language: 'nl',
+        preferred_currency: 'EUR',
+        payment_term: {
+          type: 'after_invoice_date',
+          days: 30,
+        },
+        invoicing_preferences: {
+          electronic_invoicing_address: null,
+        },
+        responsible_user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        added_at: '2024-01-01T10:00:00+01:00',
+        updated_at: '2026-01-20T14:00:00+01:00',
+        web_url: 'https://focus.teamleader.eu/company_detail.php?id=company-uuid-1',
+        tags: ['partner', 'enterprise'],
+      },
+      {
+        id: 'company-uuid-2',
+        name: 'Small Business Inc',
+        status: 'active',
+        business_type: null,
+        vat_number: null,
+        national_identification_number: null,
+        emails: [
+          {
+            type: 'primary',
+            email: 'contact@smallbiz.com',
+          },
+        ],
+        telephones: [],
+        website: null,
+        primary_address: null,
+        iban: null,
+        bic: null,
+        language: 'en',
+        preferred_currency: null,
+        payment_term: null,
+        invoicing_preferences: {
+          electronic_invoicing_address: null,
+        },
+        responsible_user: null,
+        added_at: '2025-06-01T09:00:00+02:00',
+        updated_at: '2026-01-25T11:30:00+01:00',
+        web_url: 'https://focus.teamleader.eu/company_detail.php?id=company-uuid-2',
+        tags: [],
+      },
+    ],
+    meta: {
+      page: {
+        size: 20,
+        number: 1,
+      },
+      matches: 2,
+    },
+  },
+
+  info: {
+    data: {
+      id: 'company-uuid-1',
+      name: 'Acme Corporation',
+      status: 'active',
+      business_type: {
+        type: 'businessType',
+        id: 'business-type-uuid-1',
+      },
+      vat_number: 'BE0899623035',
+      national_identification_number: '63326426',
+      emails: [
+        {
+          type: 'primary',
+          email: 'info@acme.com',
+        },
+      ],
+      telephones: [
+        {
+          type: 'phone',
+          number: '+32 2 123 45 67',
+        },
+      ],
+      website: 'https://acme.com',
+      addresses: [
+        {
+          type: 'primary',
+          address: {
+            line_1: 'Main Street 100',
+            postal_code: '1000',
+            city: 'Brussels',
+            country: 'BE',
+          },
+        },
+        {
+          type: 'invoicing',
+          address: {
+            line_1: 'Invoice Street 50',
+            postal_code: '1000',
+            city: 'Brussels',
+            country: 'BE',
+          },
+        },
+      ],
+      iban: 'BE12123412341234',
+      bic: 'BICBANK',
+      language: 'nl',
+      preferred_currency: 'EUR',
+      payment_term: {
+        type: 'after_invoice_date',
+        days: 30,
+      },
+      invoicing_preferences: {
+        electronic_invoicing_address: null,
+      },
+      responsible_user: {
+        type: 'user',
+        id: 'user-uuid-1',
+      },
+      remarks: 'Important partner company',
+      added_at: '2024-01-01T10:00:00+01:00',
+      updated_at: '2026-01-20T14:00:00+01:00',
+      web_url: 'https://focus.teamleader.eu/company_detail.php?id=company-uuid-1',
+      tags: ['partner', 'enterprise'],
+      custom_fields: [],
+      marketing_mails_consent: true,
+    },
+  },
+
+  add: {
+    type: 'company',
+    id: 'company-uuid-new',
+  },
+};
+
+// ============================================================================
+// DEALS MOCKS - Based on official API structure
+// ============================================================================
+
+export const mockDeals = {
+  list: {
+    data: [
+      {
+        id: 'deal-uuid-1',
+        title: 'Website Redesign Project',
+        summary: 'Complete overhaul of the corporate website',
+        reference: '2026/1',
+        status: 'open',
+        lead: {
+          customer: {
+            type: 'company',
+            id: 'company-uuid-1',
+          },
+          contact_person: {
+            type: 'contact',
+            id: 'contact-uuid-1',
+          },
+        },
+        department: {
+          type: 'department',
+          id: 'department-uuid-1',
+        },
+        estimated_value: {
+          amount: 15000.00,
+          currency: 'EUR',
+        },
+        estimated_closing_date: '2026-03-15',
+        estimated_probability: 0.75,
+        weighted_value: {
+          amount: 11250.00,
+          currency: 'EUR',
+        },
+        purchase_order_number: 'PO-2026-001',
+        current_phase: {
+          type: 'dealPhase',
+          id: 'phase-uuid-2',
+        },
+        responsible_user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        closed_at: null,
+        source: {
+          type: 'dealSource',
+          id: 'source-uuid-1',
+        },
+        lost_reason: null,
+        created_at: '2026-01-10T09:00:00+01:00',
+        updated_at: '2026-01-25T14:30:00+01:00',
+        web_url: 'https://focus.teamleader.eu/sale_detail.php?id=deal-uuid-1',
+        currency_exchange_rate: {
+          from: 'EUR',
+          to: 'EUR',
+          rate: 1,
+        },
+        pipeline: {
+          type: 'dealPipeline',
+          id: 'pipeline-uuid-1',
+        },
+      },
+      {
+        id: 'deal-uuid-2',
+        title: 'Mobile App Development',
+        summary: null,
+        reference: '2026/2',
+        status: 'won',
+        lead: {
+          customer: {
+            type: 'contact',
+            id: 'contact-uuid-2',
+          },
+          contact_person: null,
+        },
+        department: {
+          type: 'department',
+          id: 'department-uuid-1',
+        },
+        estimated_value: {
+          amount: 25000.00,
+          currency: 'EUR',
+        },
+        estimated_closing_date: '2026-02-01',
+        estimated_probability: 1.0,
+        weighted_value: {
+          amount: 25000.00,
+          currency: 'EUR',
+        },
+        purchase_order_number: null,
+        current_phase: {
+          type: 'dealPhase',
+          id: 'phase-uuid-4',
+        },
+        responsible_user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        closed_at: '2026-01-28T16:00:00+01:00',
+        source: null,
+        lost_reason: null,
+        created_at: '2025-12-01T10:00:00+01:00',
+        updated_at: '2026-01-28T16:00:00+01:00',
+        web_url: 'https://focus.teamleader.eu/sale_detail.php?id=deal-uuid-2',
+        currency_exchange_rate: {
+          from: 'EUR',
+          to: 'EUR',
+          rate: 1,
+        },
+        pipeline: {
+          type: 'dealPipeline',
+          id: 'pipeline-uuid-1',
+        },
+      },
+    ],
+    meta: {
+      page: {
+        size: 20,
+        number: 1,
+      },
+      matches: 2,
+    },
+  },
+
+  info: {
+    data: {
+      id: 'deal-uuid-1',
+      title: 'Website Redesign Project',
+      summary: 'Complete overhaul of the corporate website',
+      reference: '2026/1',
+      status: 'open',
+      lead: {
+        customer: {
+          type: 'company',
+          id: 'company-uuid-1',
+        },
+        contact_person: {
+          type: 'contact',
+          id: 'contact-uuid-1',
+        },
+      },
+      department: {
+        type: 'department',
+        id: 'department-uuid-1',
+      },
+      estimated_value: {
+        amount: 15000.00,
+        currency: 'EUR',
+      },
+      estimated_closing_date: '2026-03-15',
+      estimated_probability: 0.75,
+      weighted_value: {
+        amount: 11250.00,
+        currency: 'EUR',
+      },
+      purchase_order_number: 'PO-2026-001',
+      current_phase: {
+        type: 'dealPhase',
+        id: 'phase-uuid-2',
+      },
+      responsible_user: {
+        type: 'user',
+        id: 'user-uuid-1',
+      },
+      closed_at: null,
+      source: {
+        type: 'dealSource',
+        id: 'source-uuid-1',
+      },
+      phase_history: [
+        {
+          phase: {
+            type: 'dealPhase',
+            id: 'phase-uuid-1',
+          },
+          started_at: '2026-01-10T09:00:00+01:00',
+          started_by: {
+            type: 'user',
+            id: 'user-uuid-1',
+          },
+        },
+        {
+          phase: {
+            type: 'dealPhase',
+            id: 'phase-uuid-2',
+          },
+          started_at: '2026-01-15T11:00:00+01:00',
+          started_by: {
+            type: 'user',
+            id: 'user-uuid-1',
+          },
+        },
+      ],
+      quotations: [
+        {
+          id: 'quotation-uuid-1',
+          type: 'quotation',
+        },
+      ],
+      lost_reason: null,
+      created_at: '2026-01-10T09:00:00+01:00',
+      updated_at: '2026-01-25T14:30:00+01:00',
+      web_url: 'https://focus.teamleader.eu/sale_detail.php?id=deal-uuid-1',
+      custom_fields: [],
+      currency_exchange_rate: {
+        from: 'EUR',
+        to: 'EUR',
+        rate: 1,
+      },
+      pipeline: {
+        type: 'dealPipeline',
+        id: 'pipeline-uuid-1',
+      },
+    },
+  },
+
+  create: {
+    type: 'deal',
+    id: 'deal-uuid-new',
+  },
+};
+
+export const mockDealPhases = {
+  list: {
+    data: [
+      {
+        id: 'phase-uuid-1',
+        name: 'New',
+        actions: ['create_task'],
+        requires_attention_after: {
+          amount: 3,
+          unit: 'days',
+        },
+        probability: 0.1,
+      },
+      {
+        id: 'phase-uuid-2',
+        name: 'Qualifying',
+        actions: ['create_call'],
+        requires_attention_after: {
+          amount: 7,
+          unit: 'days',
+        },
+        probability: 0.25,
+      },
+      {
+        id: 'phase-uuid-3',
+        name: 'Proposal',
+        actions: ['create_meeting'],
+        requires_attention_after: {
+          amount: 14,
+          unit: 'days',
+        },
+        probability: 0.5,
+      },
+      {
+        id: 'phase-uuid-4',
+        name: 'Negotiation',
+        actions: [],
+        requires_attention_after: {
+          amount: 7,
+          unit: 'days',
+        },
+        probability: 0.75,
+      },
+    ],
+  },
+};
+
+export const mockLostReasons = {
+  list: {
+    data: [
+      {
+        id: 'lost-reason-uuid-1',
+        name: 'Price too high',
+      },
+      {
+        id: 'lost-reason-uuid-2',
+        name: 'Chose competitor',
+      },
+      {
+        id: 'lost-reason-uuid-3',
+        name: 'Project cancelled',
+      },
+    ],
+  },
+};
+
+// ============================================================================
+// PRODUCTS MOCKS - Based on official API structure
+// ============================================================================
+
+export const mockProducts = {
+  list: {
+    data: [
+      {
+        id: 'product-uuid-1',
+        name: 'Web Development Hour',
+        description: 'One hour of web development work',
+        code: 'WEB-DEV-HOUR',
+        purchase_price: null,
+        selling_price: {
+          amount: 100.00,
+          currency: 'EUR',
+        },
+        unit: {
+          type: 'unitOfMeasure',
+          id: 'unit-uuid-hours',
+        },
+        added_at: '2024-01-01T10:00:00+01:00',
+        updated_at: '2026-01-15T09:00:00+01:00',
+      },
+      {
+        id: 'product-uuid-2',
+        name: 'Hosting Package - Basic',
+        description: 'Monthly hosting for small websites',
+        code: 'HOST-BASIC',
+        purchase_price: {
+          amount: 5.00,
+          currency: 'EUR',
+        },
+        selling_price: {
+          amount: 25.00,
+          currency: 'EUR',
+        },
+        unit: {
+          type: 'unitOfMeasure',
+          id: 'unit-uuid-month',
+        },
+        added_at: '2024-06-01T10:00:00+02:00',
+        updated_at: '2026-01-10T11:00:00+01:00',
+      },
+      {
+        id: 'product-uuid-3',
+        name: 'Domain Registration',
+        description: 'Annual domain name registration',
+        code: 'DOMAIN-REG',
+        purchase_price: {
+          amount: 8.00,
+          currency: 'EUR',
+        },
+        selling_price: {
+          amount: 15.00,
+          currency: 'EUR',
+        },
+        unit: null,
+        added_at: '2025-01-01T10:00:00+01:00',
+        updated_at: '2026-01-01T10:00:00+01:00',
+      },
+    ],
+    meta: {
+      page: {
+        size: 20,
+        number: 1,
+      },
+      matches: 3,
+    },
+  },
+
+  info: {
+    data: {
+      id: 'product-uuid-1',
+      name: 'Web Development Hour',
+      description: 'One hour of web development work',
+      code: 'WEB-DEV-HOUR',
+      purchase_price: null,
+      selling_price: {
+        amount: 100.00,
+        currency: 'EUR',
+      },
+      department: {
+        type: 'department',
+        id: 'department-uuid-1',
+      },
+      product_category: {
+        type: 'productCategory',
+        id: 'category-uuid-services',
+      },
+      tax: {
+        type: 'taxRate',
+        id: 'tax-rate-uuid-21',
+      },
+      unit: {
+        type: 'unitOfMeasure',
+        id: 'unit-uuid-hours',
+      },
+      stock: null,
+      configuration: {
+        stock_management_enabled: false,
+      },
+      custom_fields: [],
+      price_list_prices: [],
+      added_at: '2024-01-01T10:00:00+01:00',
+      updated_at: '2026-01-15T09:00:00+01:00',
+    },
+  },
+
+  add: {
+    type: 'product',
+    id: 'product-uuid-new',
+  },
+};
+
+// ============================================================================
+// TIME TRACKING MOCKS - Based on official API structure
+// ============================================================================
+
+export const mockTimeTracking = {
+  list: {
+    data: [
+      {
+        id: 'timetracking-uuid-1',
+        user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        work_type: {
+          type: 'workType',
+          id: 'worktype-uuid-1',
+        },
+        started_on: '2026-01-30',
+        started_at: '2026-01-30T09:00:00+01:00',
+        ended_at: '2026-01-30T12:00:00+01:00',
+        duration: 10800, // 3 hours in seconds
+        description: 'Frontend development for homepage',
+        subject: {
+          type: 'milestone',
+          id: 'milestone-uuid-1',
+        },
+        invoiceable: true,
+        billing_info: {
+          billed: false,
+          invoice: null,
+        },
+        hourly_rate: {
+          amount: 100.00,
+          currency: 'EUR',
+        },
+      },
+      {
+        id: 'timetracking-uuid-2',
+        user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        work_type: {
+          type: 'workType',
+          id: 'worktype-uuid-2',
+        },
+        started_on: '2026-01-30',
+        started_at: '2026-01-30T13:00:00+01:00',
+        ended_at: '2026-01-30T15:30:00+01:00',
+        duration: 9000, // 2.5 hours in seconds
+        description: 'Bug fixing and testing',
+        subject: {
+          type: 'ticket',
+          id: 'ticket-uuid-1',
+        },
+        invoiceable: true,
+        billing_info: {
+          billed: true,
+          invoice: {
+            type: 'invoice',
+            id: 'invoice-uuid-1',
+          },
+        },
+        hourly_rate: {
+          amount: 85.00,
+          currency: 'EUR',
+        },
+      },
+      {
+        id: 'timetracking-uuid-3',
+        user: {
+          type: 'user',
+          id: 'user-uuid-1',
+        },
+        work_type: null,
+        started_on: '2026-01-29',
+        started_at: '2026-01-29T14:00:00+01:00',
+        ended_at: '2026-01-29T15:00:00+01:00',
+        duration: 3600, // 1 hour in seconds
+        description: 'Internal meeting',
+        subject: null,
+        invoiceable: false,
+        billing_info: null,
+        hourly_rate: null,
+      },
+    ],
+    meta: {
+      page: {
+        size: 20,
+        number: 1,
+      },
+      matches: 3,
+    },
+  },
+
+  info: {
+    data: {
+      id: 'timetracking-uuid-1',
+      user: {
+        type: 'user',
+        id: 'user-uuid-1',
+      },
+      work_type: {
+        type: 'workType',
+        id: 'worktype-uuid-1',
+      },
+      started_on: '2026-01-30',
+      started_at: '2026-01-30T09:00:00+01:00',
+      ended_at: '2026-01-30T12:00:00+01:00',
+      duration: 10800,
+      description: 'Frontend development for homepage',
+      subject: {
+        type: 'milestone',
+        id: 'milestone-uuid-1',
+      },
+      invoiceable: true,
+      locked: false,
+      updatable: true,
+      billing_info: {
+        billed: false,
+        invoice: null,
+      },
+      hourly_rate: {
+        amount: 100.00,
+        currency: 'EUR',
+      },
+    },
+  },
+
+  add: {
+    type: 'timeTracking',
+    id: 'timetracking-uuid-new',
+  },
+};
+
+export const mockTimers = {
+  current: {
+    data: {
+      id: 'timer-uuid-1',
+      user: {
+        type: 'user',
+        id: 'user-uuid-1',
+      },
+      work_type: {
+        type: 'workType',
+        id: 'worktype-uuid-1',
+      },
+      started_at: '2026-01-31T09:00:00+01:00',
+      description: 'Working on feature X',
+      subject: {
+        type: 'milestone',
+        id: 'milestone-uuid-1',
+      },
+      invoiceable: true,
+    },
+  },
+
+  start: {
+    type: 'timer',
+    id: 'timer-uuid-new',
+  },
+};
+
+// ============================================================================
 // DEPARTMENTS MOCKS
 // ============================================================================
 
