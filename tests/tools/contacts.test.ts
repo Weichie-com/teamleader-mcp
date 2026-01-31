@@ -101,7 +101,8 @@ describe('Contacts Tools', () => {
       
       expect(contactWithoutOptionals.telephones).toHaveLength(0);
       expect(contactWithoutOptionals.website).toBeNull();
-      expect(contactWithoutOptionals.addresses).toHaveLength(0);
+      // In list view, API returns primary_address (nullable) not addresses array
+      expect((contactWithoutOptionals as unknown as { primary_address: unknown }).primary_address).toBeNull();
       expect(contactWithoutOptionals.birthdate).toBeNull();
     });
 
