@@ -104,7 +104,9 @@ export class TeamleaderClient {
       reset: response.headers.get('X-RateLimit-Reset') || '',
     };
 
-    const data = await response.json();
+    // Handle empty responses (204 No Content for delete operations)
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
 
     if (!response.ok) {
       const apiError = data as ApiError;
