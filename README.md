@@ -92,11 +92,32 @@ Create a `.env` file (see `.env.example`):
 # Required
 TEAMLEADER_ACCESS_TOKEN=your_access_token
 
-# Optional (for token refresh)
+# Optional (for automatic token refresh)
 TEAMLEADER_CLIENT_ID=your_client_id
 TEAMLEADER_CLIENT_SECRET=your_client_secret
 TEAMLEADER_REFRESH_TOKEN=your_refresh_token
+TEAMLEADER_TOKEN_STORAGE=/path/to/.teamleader-tokens.json  # Optional: custom storage path
 ```
+
+### Token Refresh
+
+The server supports two modes:
+
+#### Static Token Mode (default)
+Set only `TEAMLEADER_ACCESS_TOKEN`. The token will be used until it expires (1 hour). You'll need to manually refresh and update the token.
+
+#### Automatic Refresh Mode (recommended for production)
+Set all four environment variables:
+- `TEAMLEADER_CLIENT_ID` - Your OAuth client ID
+- `TEAMLEADER_CLIENT_SECRET` - Your OAuth client secret  
+- `TEAMLEADER_REFRESH_TOKEN` - Your OAuth refresh token
+- `TEAMLEADER_ACCESS_TOKEN` - Initial access token
+
+With automatic refresh enabled:
+- Tokens are refreshed 5 minutes before expiry
+- On 401 errors, refresh is attempted automatically with retry
+- New tokens are persisted to `~/.teamleader-tokens.json` (or custom path)
+- Graceful fallback: if refresh fails, error is propagated
 
 ## Usage
 
@@ -391,7 +412,21 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Cause:** Teamleader access tokens expire after 1 hour.
 
-**Fix:** Refresh your token using the refresh_token flow, or set up automatic token refresh with the optional `TEAMLEADER_CLIENT_ID`, `TEAMLEADER_CLIENT_SECRET`, and `TEAMLEADER_REFRESH_TOKEN` environment variables.
+**Fix:** Set up automatic token refresh by configuring all OAuth environment variables:
+
+```bash
+TEAMLEADER_ACCESS_TOKEN=your_access_token
+TEAMLEADER_CLIENT_ID=your_client_id
+TEAMLEADER_CLIENT_SECRET=your_client_secret
+TEAMLEADER_REFRESH_TOKEN=your_refresh_token
+```
+
+With these configured, the server will:
+1. Automatically refresh tokens 5 minutes before expiry
+2. Retry failed requests after refreshing on 401 errors
+3. Persist new tokens to `~/.teamleader-tokens.json`
+
+If you only have an access token, you'll need to manually refresh it using the OAuth refresh flow.
 
 ## Related
 

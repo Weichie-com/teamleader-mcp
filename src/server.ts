@@ -15,7 +15,8 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-import { TeamleaderClient } from './client/teamleader.js';
+import { TeamleaderClient, TeamleaderApiError } from './client/teamleader.js';
+import { TokenManager } from './auth/token-manager.js';
 import * as calendar from './tools/calendar.js';
 import * as contacts from './tools/contacts.js';
 import * as companies from './tools/companies.js';
@@ -609,7 +610,16 @@ const TOOLS = [
   },
 ];
 
-export function createServer(client: TeamleaderClient): Server {
+/**
+ * Token refresh callback type
+ * Returns the new access token after refresh
+ */
+type TokenRefreshCallback = () => Promise<string>;
+
+export function createServer(
+  client: TeamleaderClient, 
+  onTokenRefresh?: TokenRefreshCallback
+): Server {
   const server = new Server(
     {
       name: 'teamleader-mcp',
@@ -622,6 +632,29 @@ export function createServer(client: TeamleaderClient): Server {
     }
   );
 
+  /**
+   * Execute an API call with automatic retry on 401 (token expired)
+   */
+  async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (error) {
+      // If we get a 401 and can refresh, try once more
+      if (
+        error instanceof TeamleaderApiError &&
+        error.status === 401 &&
+        onTokenRefresh
+      ) {
+        console.error('[Server] Got 401, attempting token refresh...');
+        const newToken = await onTokenRefresh();
+        client.setAccessToken(newToken);
+        console.error('[Server] Token refreshed, retrying request...');
+        return await fn();
+      }
+      throw error;
+    }
+  }
+
   // List available tools
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: TOOLS,
@@ -631,7 +664,8 @@ export function createServer(client: TeamleaderClient): Server {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    try {
+    // Wrap entire tool execution for automatic retry on 401
+    const executeTool = async () => {
       switch (name) {
         // =====================================================================
         // CALENDAR TOOLS
@@ -948,6 +982,11 @@ export function createServer(client: TeamleaderClient): Server {
         default:
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
+    };
+    
+    try {
+      // Execute with automatic retry on 401
+      return await withRetry(executeTool);
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new McpError(
@@ -962,11 +1001,35 @@ export function createServer(client: TeamleaderClient): Server {
   return server;
 }
 
-export async function startServer(accessToken: string): Promise<void> {
-  const client = new TeamleaderClient({ accessToken });
-  const server = createServer(client);
+export async function startServer(tokenManager: TokenManager): Promise<void> {
+  // Initialize token manager (loads stored tokens if available)
+  await tokenManager.initialize();
+  
+  // Get initial access token
+  const initialToken = await tokenManager.getAccessToken();
+  const client = new TeamleaderClient({ accessToken: initialToken });
+  
+  // Create token refresh callback
+  const onTokenRefresh = async (): Promise<string> => {
+    tokenManager.setExpired(); // Force refresh
+    await tokenManager.refresh();
+    return tokenManager.getAccessToken();
+  };
+  
+  // Create server with refresh callback (only if refresh is available)
+  const server = createServer(
+    client, 
+    tokenManager.canRefresh() ? onTokenRefresh : undefined
+  );
+  
   const transport = new StdioServerTransport();
   
   await server.connect(transport);
   console.error('Teamleader MCP server started');
+  
+  if (tokenManager.canRefresh()) {
+    console.error('Automatic token refresh enabled');
+  } else {
+    console.error('Static token mode (no automatic refresh)');
+  }
 }
