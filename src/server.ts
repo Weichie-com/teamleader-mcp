@@ -2,7 +2,7 @@
  * Teamleader Focus MCP Server
  * 
  * Model Context Protocol server providing tools to interact with
- * Teamleader Focus API for calendar events, contacts, and more.
+ * Teamleader Focus API for CRM, invoicing, time tracking and more.
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -18,19 +18,27 @@ import { z } from 'zod';
 import { TeamleaderClient } from './client/teamleader.js';
 import * as calendar from './tools/calendar.js';
 import * as contacts from './tools/contacts.js';
+import * as companies from './tools/companies.js';
+import * as deals from './tools/deals.js';
+import * as invoices from './tools/invoices.js';
+import * as quotations from './tools/quotations.js';
+import * as products from './tools/products.js';
+import * as timetracking from './tools/timetracking.js';
 import * as email from './tools/email.js';
 
 // Tool definitions
 const TOOLS = [
-  // Calendar tools
+  // ============================================================================
+  // CALENDAR TOOLS
+  // ============================================================================
   {
     name: 'teamleader_events_list',
     description: 'List calendar events from Teamleader Focus. Can filter by date range, contact, company, or deal.',
     inputSchema: {
       type: 'object',
       properties: {
-        from: { type: 'string', description: 'Start date (ISO 8601, e.g., 2026-02-01)' },
-        to: { type: 'string', description: 'End date (ISO 8601, e.g., 2026-02-28)' },
+        from: { type: 'string', description: 'Start datetime (full ISO 8601 with timezone, e.g., 2026-02-01T00:00:00+01:00)' },
+        to: { type: 'string', description: 'End datetime (full ISO 8601 with timezone, e.g., 2026-02-28T23:59:59+01:00)' },
         contact_id: { type: 'string', description: 'Filter by linked contact UUID' },
         company_id: { type: 'string', description: 'Filter by linked company UUID' },
         deal_id: { type: 'string', description: 'Filter by linked deal UUID' },
@@ -56,7 +64,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         title: { type: 'string', description: 'Event title' },
-        starts_at: { type: 'string', description: 'Start datetime (ISO 8601, e.g., 2026-02-01T10:00:00+01:00)' },
+        starts_at: { type: 'string', description: 'Start datetime (ISO 8601)' },
         ends_at: { type: 'string', description: 'End datetime (ISO 8601)' },
         description: { type: 'string', description: 'Event description' },
         location: { type: 'string', description: 'Event location' },
@@ -69,16 +77,16 @@ const TOOLS = [
     },
   },
   
-  // Contacts tools
+  // ============================================================================
+  // CONTACTS TOOLS
+  // ============================================================================
   {
     name: 'teamleader_contacts_list',
     description: 'List contacts from Teamleader Focus. Can filter by name, email, company, or tags.',
     inputSchema: {
       type: 'object',
       properties: {
-        name: { type: 'string', description: 'Search by name' },
-        email: { type: 'string', description: 'Search by email address' },
-        term: { type: 'string', description: 'General search term' },
+        term: { type: 'string', description: 'Search term (name, email, phone)' },
         company_id: { type: 'string', description: 'Filter by linked company UUID' },
         tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
         status: { type: 'string', enum: ['active', 'deactivated'], description: 'Filter by status' },
@@ -97,10 +105,483 @@ const TOOLS = [
     },
   },
   
-  // Email tracking tools
+  // ============================================================================
+  // COMPANIES TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_companies_list',
+    description: 'List companies from Teamleader Focus. Can filter by name, VAT number, or tags.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'Search term (name, VAT, email, phone)' },
+        vat_number: { type: 'string', description: 'Filter by VAT number' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
+        status: { type: 'string', enum: ['active', 'deactivated'], description: 'Filter by status' },
+        updated_since: { type: 'string', description: 'Filter by last update (ISO 8601)' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_company_info',
+    description: 'Get details of a specific company by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Company UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_company_create',
+    description: 'Create a new company in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Company name (required)' },
+        vat_number: { type: 'string', description: 'VAT number' },
+        emails: { type: 'array', items: { type: 'object' }, description: 'Email addresses' },
+        telephones: { type: 'array', items: { type: 'object' }, description: 'Phone numbers' },
+        website: { type: 'string', description: 'Website URL' },
+        language: { type: 'string', description: 'Language code (e.g., nl, en)' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags to add' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'teamleader_company_update',
+    description: 'Update an existing company in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Company UUID (required)' },
+        name: { type: 'string', description: 'Company name' },
+        vat_number: { type: 'string', description: 'VAT number' },
+        tags: { type: 'array', items: { type: 'string' }, description: 'Tags (overwrites existing)' },
+      },
+      required: ['id'],
+    },
+  },
+  
+  // ============================================================================
+  // DEALS TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_deals_list',
+    description: 'List deals/opportunities from Teamleader Focus. Can filter by status, customer, or phase.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'Search term (title, reference, customer)' },
+        status: { type: 'array', items: { type: 'string', enum: ['open', 'won', 'lost'] }, description: 'Filter by status' },
+        customer_type: { type: 'string', enum: ['contact', 'company'], description: 'Customer type' },
+        customer_id: { type: 'string', description: 'Customer UUID' },
+        phase_id: { type: 'string', description: 'Filter by deal phase UUID' },
+        responsible_user_id: { type: 'string', description: 'Filter by responsible user UUID' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_deal_info',
+    description: 'Get details of a specific deal by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Deal UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_deal_create',
+    description: 'Create a new deal/opportunity in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Deal title (required)' },
+        customer_type: { type: 'string', enum: ['contact', 'company'], description: 'Customer type (required)' },
+        customer_id: { type: 'string', description: 'Customer UUID (required)' },
+        summary: { type: 'string', description: 'Deal summary' },
+        estimated_value: { type: 'number', description: 'Estimated value' },
+        estimated_probability: { type: 'number', description: 'Probability (0-1)' },
+        estimated_closing_date: { type: 'string', description: 'Expected close date (YYYY-MM-DD)' },
+        phase_id: { type: 'string', description: 'Initial deal phase UUID' },
+        responsible_user_id: { type: 'string', description: 'Responsible user UUID' },
+      },
+      required: ['title', 'customer_type', 'customer_id'],
+    },
+  },
+  {
+    name: 'teamleader_deal_update',
+    description: 'Update an existing deal in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Deal UUID (required)' },
+        title: { type: 'string', description: 'Deal title' },
+        summary: { type: 'string', description: 'Deal summary' },
+        estimated_value: { type: 'number', description: 'Estimated value' },
+        estimated_probability: { type: 'number', description: 'Probability (0-1)' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_deal_move',
+    description: 'Move a deal to a different phase.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Deal UUID' },
+        phase_id: { type: 'string', description: 'Target phase UUID' },
+      },
+      required: ['id', 'phase_id'],
+    },
+  },
+  {
+    name: 'teamleader_deal_win',
+    description: 'Mark a deal as won.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Deal UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_deal_lose',
+    description: 'Mark a deal as lost.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Deal UUID' },
+        reason_id: { type: 'string', description: 'Lost reason UUID' },
+        extra_info: { type: 'string', description: 'Additional explanation' },
+      },
+      required: ['id'],
+    },
+  },
+  
+  // ============================================================================
+  // INVOICES TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_invoices_list',
+    description: 'List invoices from Teamleader Focus. Can filter by status, customer, or date.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'Search term' },
+        status: { type: 'array', items: { type: 'string', enum: ['draft', 'outstanding', 'matched'] }, description: 'Filter by status' },
+        invoice_date_after: { type: 'string', description: 'Filter by date (YYYY-MM-DD)' },
+        invoice_date_before: { type: 'string', description: 'Filter by date (YYYY-MM-DD)' },
+        customer_type: { type: 'string', enum: ['contact', 'company'] },
+        customer_id: { type: 'string', description: 'Customer UUID' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_invoice_info',
+    description: 'Get details of a specific invoice by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_invoice_draft',
+    description: 'Create a new draft invoice in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        customer_type: { type: 'string', enum: ['contact', 'company'], description: 'Customer type' },
+        customer_id: { type: 'string', description: 'Customer UUID' },
+        department_id: { type: 'string', description: 'Department UUID' },
+        payment_term_type: { type: 'string', enum: ['cash', 'end_of_month', 'after_invoice_date'] },
+        payment_term_days: { type: 'number', description: 'Days for payment term' },
+        grouped_lines: { type: 'array', description: 'Invoice line items' },
+        note: { type: 'string', description: 'Invoice note' },
+      },
+      required: ['customer_type', 'customer_id', 'department_id', 'payment_term_type', 'grouped_lines'],
+    },
+  },
+  {
+    name: 'teamleader_invoice_send',
+    description: 'Send an invoice via email.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice UUID' },
+        subject: { type: 'string', description: 'Email subject' },
+        body: { type: 'string', description: 'Email body' },
+        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses' },
+      },
+      required: ['id', 'subject', 'body', 'to'],
+    },
+  },
+  {
+    name: 'teamleader_invoice_book',
+    description: 'Book a draft invoice (finalize it).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice UUID' },
+        on: { type: 'string', description: 'Booking date (YYYY-MM-DD)' },
+      },
+      required: ['id', 'on'],
+    },
+  },
+  {
+    name: 'teamleader_invoice_delete',
+    description: 'Delete a draft invoice or the last booked invoice.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_invoice_register_payment',
+    description: 'Register a payment for an invoice.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Invoice UUID' },
+        amount: { type: 'number', description: 'Payment amount' },
+        currency: { type: 'string', description: 'Currency code (e.g., EUR)' },
+        paid_at: { type: 'string', description: 'Payment date (ISO 8601)' },
+      },
+      required: ['id', 'amount', 'paid_at'],
+    },
+  },
+  
+  // ============================================================================
+  // QUOTATIONS TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_quotations_list',
+    description: 'List quotations from Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ids: { type: 'array', items: { type: 'string' }, description: 'Filter by UUIDs' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_quotation_info',
+    description: 'Get details of a specific quotation by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Quotation UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_create',
+    description: 'Create a new quotation in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        deal_id: { type: 'string', description: 'Deal UUID (required)' },
+        grouped_lines: { type: 'array', description: 'Quotation line items' },
+        text: { type: 'string', description: 'Quotation text (Markdown)' },
+      },
+      required: ['deal_id'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_send',
+    description: 'Send a quotation via email.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        quotation_ids: { type: 'array', items: { type: 'string' }, description: 'Quotation UUIDs to send' },
+        subject: { type: 'string', description: 'Email subject' },
+        content: { type: 'string', description: 'Email content (use #LINK for cloudsign URL)' },
+        to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses' },
+        language: { type: 'string', description: 'Language code' },
+      },
+      required: ['quotation_ids', 'subject', 'content', 'to', 'language'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_accept',
+    description: 'Mark a quotation as accepted.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Quotation UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_delete',
+    description: 'Delete a quotation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Quotation UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_download',
+    description: 'Get a download link for a quotation PDF.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Quotation UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  
+  // ============================================================================
+  // PRODUCTS TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_products_list',
+    description: 'List products from Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'Search term (name, code)' },
+        updated_since: { type: 'string', description: 'Filter by last update (ISO 8601)' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_product_info',
+    description: 'Get details of a specific product by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Product UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_product_create',
+    description: 'Create a new product in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Product name (required)' },
+        description: { type: 'string', description: 'Product description (Markdown)' },
+        code: { type: 'string', description: 'Product code/SKU' },
+        selling_price: { type: 'number', description: 'Selling price' },
+        purchase_price: { type: 'number', description: 'Purchase price' },
+        currency: { type: 'string', description: 'Currency code (default: EUR)' },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'teamleader_product_update',
+    description: 'Update an existing product in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Product UUID (required)' },
+        name: { type: 'string', description: 'Product name' },
+        description: { type: 'string', description: 'Product description' },
+        code: { type: 'string', description: 'Product code/SKU' },
+        selling_price: { type: 'number', description: 'Selling price' },
+      },
+      required: ['id'],
+    },
+  },
+  
+  // ============================================================================
+  // TIME TRACKING TOOLS
+  // ============================================================================
+  {
+    name: 'teamleader_timetracking_list',
+    description: 'List time tracking entries from Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        user_id: { type: 'string', description: 'Filter by user UUID' },
+        started_after: { type: 'string', description: 'Filter by start date (ISO 8601)' },
+        started_before: { type: 'string', description: 'Filter by start date (ISO 8601)' },
+        subject_type: { type: 'string', enum: ['milestone', 'ticket', 'nextgenTask'], description: 'Subject type' },
+        subject_id: { type: 'string', description: 'Subject UUID' },
+      },
+    },
+  },
+  {
+    name: 'teamleader_timetracking_info',
+    description: 'Get details of a specific time tracking entry by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Time tracking UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_timetracking_add',
+    description: 'Add a new time tracking entry in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        started_at: { type: 'string', description: 'Start datetime (ISO 8601, required)' },
+        ended_at: { type: 'string', description: 'End datetime (ISO 8601, required)' },
+        description: { type: 'string', description: 'Work description' },
+        work_type_id: { type: 'string', description: 'Work type UUID' },
+        subject_type: { type: 'string', enum: ['milestone', 'ticket', 'nextgenTask'], description: 'Link to subject type' },
+        subject_id: { type: 'string', description: 'Subject UUID' },
+        invoiceable: { type: 'boolean', description: 'Is this billable? (default: true)' },
+      },
+      required: ['started_at', 'ended_at'],
+    },
+  },
+  {
+    name: 'teamleader_timetracking_update',
+    description: 'Update an existing time tracking entry.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Time tracking UUID (required)' },
+        description: { type: 'string', description: 'Work description' },
+        invoiceable: { type: 'boolean', description: 'Is this billable?' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'teamleader_timetracking_delete',
+    description: 'Delete a time tracking entry.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Time tracking UUID' },
+      },
+      required: ['id'],
+    },
+  },
+  
+  // ============================================================================
+  // EMAIL TRACKING TOOLS
+  // ============================================================================
   {
     name: 'teamleader_email_track',
-    description: 'Track/log an externally sent email in Teamleader Focus. Links the email to a contact, company, or deal for activity tracking.',
+    description: 'Track/log an email in Teamleader Focus. Links the email to a contact, company, or deal.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -108,23 +589,22 @@ const TOOLS = [
         body: { type: 'string', description: 'Email body (HTML supported)' },
         from: { type: 'string', description: 'Sender email address' },
         to: { type: 'array', items: { type: 'string' }, description: 'Recipient email addresses' },
-        cc: { type: 'array', items: { type: 'string' }, description: 'CC recipients' },
-        bcc: { type: 'array', items: { type: 'string' }, description: 'BCC recipients' },
-        subject_type: { type: 'string', enum: ['contact', 'company', 'deal', 'nextgenProject'], description: 'Type of entity to link to' },
-        subject_id: { type: 'string', description: 'UUID of entity to link to' },
+        subject_type: { type: 'string', enum: ['contact', 'company', 'deal', 'nextgenProject'], description: 'Entity type to link to' },
+        subject_id: { type: 'string', description: 'Entity UUID to link to' },
       },
       required: ['subject', 'body', 'from', 'to', 'subject_type', 'subject_id'],
     },
   },
   {
     name: 'teamleader_emails_list',
-    description: 'List tracked emails from Teamleader Focus. Can filter by linked entity.',
+    description: 'List tracked emails from Teamleader Focus. REQUIRED: Both subject_type and subject_id must be provided to filter by linked entity.',
     inputSchema: {
       type: 'object',
       properties: {
-        subject_type: { type: 'string', enum: ['contact', 'company', 'deal', 'nextgenProject'], description: 'Filter by entity type' },
-        subject_id: { type: 'string', description: 'Filter by entity UUID' },
+        subject_type: { type: 'string', enum: ['contact', 'company', 'deal', 'nextgenProject'], description: 'Filter by entity type (REQUIRED)' },
+        subject_id: { type: 'string', description: 'Filter by entity UUID (REQUIRED)' },
       },
+      required: ['subject_type', 'subject_id'],
     },
   },
 ];
@@ -153,63 +633,316 @@ export function createServer(client: TeamleaderClient): Server {
 
     try {
       switch (name) {
-        // Calendar tools
+        // =====================================================================
+        // CALENDAR TOOLS
+        // =====================================================================
         case 'teamleader_events_list': {
           const filter = args as calendar.EventsListFilter;
           const result = await calendar.listEvents(client, filter);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-        
         case 'teamleader_event_info': {
           const { id } = args as { id: string };
           const result = await calendar.getEventInfo(client, id);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-        
         case 'teamleader_event_create': {
           const input = args as calendar.EventCreateInput;
           const result = await calendar.createEvent(client, input);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
         
-        // Contacts tools
+        // =====================================================================
+        // CONTACTS TOOLS
+        // =====================================================================
         case 'teamleader_contacts_list': {
           const filter = args as contacts.ContactsListFilter;
           const result = await contacts.listContacts(client, filter);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-        
         case 'teamleader_contact_info': {
           const { id } = args as { id: string };
           const result = await contacts.getContactInfo(client, id);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
         
-        // Email tracking tools
+        // =====================================================================
+        // COMPANIES TOOLS
+        // =====================================================================
+        case 'teamleader_companies_list': {
+          const filter = args as companies.CompaniesListFilter;
+          const result = await companies.listCompanies(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_company_info': {
+          const { id } = args as { id: string };
+          const result = await companies.getCompanyInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_company_create': {
+          const input = args as companies.CompanyCreateInput;
+          const result = await companies.createCompany(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_company_update': {
+          const input = args as companies.CompanyUpdateInput;
+          await companies.updateCompany(client, input);
+          return { content: [{ type: 'text', text: 'Company updated successfully' }] };
+        }
+        
+        // =====================================================================
+        // DEALS TOOLS
+        // =====================================================================
+        case 'teamleader_deals_list': {
+          const { customer_type, customer_id, ...rest } = args as Record<string, unknown>;
+          const filter: deals.DealsListFilter = { ...rest };
+          if (customer_type && customer_id) {
+            filter.customer = { type: customer_type as 'contact' | 'company', id: customer_id as string };
+          }
+          const result = await deals.listDeals(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_deal_info': {
+          const { id } = args as { id: string };
+          const result = await deals.getDealInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_deal_create': {
+          const { customer_type, customer_id, estimated_value, ...rest } = args as Record<string, unknown>;
+          const input: deals.DealCreateInput = {
+            ...rest as Omit<deals.DealCreateInput, 'lead' | 'estimated_value'>,
+            lead: {
+              customer: { type: customer_type as 'contact' | 'company', id: customer_id as string },
+            },
+          };
+          if (estimated_value) {
+            input.estimated_value = { amount: estimated_value as number, currency: 'EUR' };
+          }
+          const result = await deals.createDeal(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_deal_update': {
+          const { estimated_value, ...rest } = args as Record<string, unknown>;
+          const input: deals.DealUpdateInput = { ...rest as deals.DealUpdateInput };
+          if (estimated_value) {
+            input.estimated_value = { amount: estimated_value as number, currency: 'EUR' };
+          }
+          await deals.updateDeal(client, input);
+          return { content: [{ type: 'text', text: 'Deal updated successfully' }] };
+        }
+        case 'teamleader_deal_move': {
+          const { id, phase_id } = args as { id: string; phase_id: string };
+          await deals.moveDeal(client, id, phase_id);
+          return { content: [{ type: 'text', text: 'Deal moved successfully' }] };
+        }
+        case 'teamleader_deal_win': {
+          const { id } = args as { id: string };
+          await deals.winDeal(client, id);
+          return { content: [{ type: 'text', text: 'Deal marked as won' }] };
+        }
+        case 'teamleader_deal_lose': {
+          const { id, reason_id, extra_info } = args as { id: string; reason_id?: string; extra_info?: string };
+          await deals.loseDeal(client, id, reason_id, extra_info);
+          return { content: [{ type: 'text', text: 'Deal marked as lost' }] };
+        }
+        
+        // =====================================================================
+        // INVOICES TOOLS
+        // =====================================================================
+        case 'teamleader_invoices_list': {
+          const { customer_type, customer_id, ...rest } = args as Record<string, unknown>;
+          const filter: invoices.InvoicesListFilter = { ...rest };
+          if (customer_type && customer_id) {
+            filter.customer = { type: customer_type as 'contact' | 'company', id: customer_id as string };
+          }
+          const result = await invoices.listInvoices(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_invoice_info': {
+          const { id } = args as { id: string };
+          const result = await invoices.getInvoiceInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_invoice_draft': {
+          const { customer_type, customer_id, payment_term_type, payment_term_days, ...rest } = args as Record<string, unknown>;
+          const input: invoices.InvoiceDraftInput = {
+            ...rest as Omit<invoices.InvoiceDraftInput, 'invoicee' | 'payment_term'>,
+            invoicee: {
+              customer: { type: customer_type as 'contact' | 'company', id: customer_id as string },
+            },
+            payment_term: {
+              type: payment_term_type as 'cash' | 'end_of_month' | 'after_invoice_date',
+              days: payment_term_days as number | undefined,
+            },
+          };
+          const result = await invoices.draftInvoice(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_invoice_send': {
+          const { id, subject, body, to } = args as { id: string; subject: string; body: string; to: string[] };
+          await invoices.sendInvoice(client, {
+            id,
+            content: { subject, body },
+            recipients: { to: to.map((email: string) => ({ email })) },
+          });
+          return { content: [{ type: 'text', text: 'Invoice sent successfully' }] };
+        }
+        case 'teamleader_invoice_book': {
+          const { id, on } = args as { id: string; on: string };
+          await invoices.bookInvoice(client, id, on);
+          return { content: [{ type: 'text', text: 'Invoice booked successfully' }] };
+        }
+        case 'teamleader_invoice_delete': {
+          const { id } = args as { id: string };
+          await invoices.deleteInvoice(client, id);
+          return { content: [{ type: 'text', text: 'Invoice deleted successfully' }] };
+        }
+        case 'teamleader_invoice_register_payment': {
+          const { id, amount, currency = 'EUR', paid_at } = args as { id: string; amount: number; currency?: string; paid_at: string };
+          await invoices.registerPayment(client, id, { amount, currency }, paid_at);
+          return { content: [{ type: 'text', text: 'Payment registered successfully' }] };
+        }
+        
+        // =====================================================================
+        // QUOTATIONS TOOLS
+        // =====================================================================
+        case 'teamleader_quotations_list': {
+          const filter = args as quotations.QuotationsListFilter;
+          const result = await quotations.listQuotations(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_quotation_info': {
+          const { id } = args as { id: string };
+          const result = await quotations.getQuotationInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_quotation_create': {
+          const input = args as quotations.QuotationCreateInput;
+          const result = await quotations.createQuotation(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_quotation_send': {
+          const { quotation_ids, subject, content, to, language } = args as {
+            quotation_ids: string[];
+            subject: string;
+            content: string;
+            to: string[];
+            language: string;
+          };
+          await quotations.sendQuotation(client, {
+            quotations: quotation_ids,
+            subject,
+            content,
+            recipients: { to: to.map((email: string) => ({ email_address: email })) },
+            language,
+          });
+          return { content: [{ type: 'text', text: 'Quotation sent successfully' }] };
+        }
+        case 'teamleader_quotation_accept': {
+          const { id } = args as { id: string };
+          await quotations.acceptQuotation(client, id);
+          return { content: [{ type: 'text', text: 'Quotation accepted' }] };
+        }
+        case 'teamleader_quotation_delete': {
+          const { id } = args as { id: string };
+          await quotations.deleteQuotation(client, id);
+          return { content: [{ type: 'text', text: 'Quotation deleted' }] };
+        }
+        case 'teamleader_quotation_download': {
+          const { id } = args as { id: string };
+          const result = await quotations.downloadQuotation(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        
+        // =====================================================================
+        // PRODUCTS TOOLS
+        // =====================================================================
+        case 'teamleader_products_list': {
+          const filter = args as products.ProductsListFilter;
+          const result = await products.listProducts(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_product_info': {
+          const { id } = args as { id: string };
+          const result = await products.getProductInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_product_create': {
+          const { selling_price, purchase_price, currency, ...rest } = args as Record<string, unknown>;
+          const curr = (currency as string) || 'EUR';
+          const input: products.ProductCreateInput = { ...rest as Omit<products.ProductCreateInput, 'selling_price' | 'purchase_price'> };
+          if (selling_price) {
+            input.selling_price = { amount: selling_price as number, currency: curr };
+          }
+          if (purchase_price) {
+            input.purchase_price = { amount: purchase_price as number, currency: curr };
+          }
+          const result = await products.createProduct(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_product_update': {
+          const { selling_price, purchase_price, currency, ...rest } = args as Record<string, unknown>;
+          const curr = (currency as string) || 'EUR';
+          const input: products.ProductUpdateInput = { ...rest as products.ProductUpdateInput };
+          if (selling_price !== undefined) {
+            input.selling_price = selling_price ? { amount: selling_price as number, currency: curr } : null;
+          }
+          if (purchase_price !== undefined) {
+            input.purchase_price = purchase_price ? { amount: purchase_price as number, currency: curr } : null;
+          }
+          await products.updateProduct(client, input);
+          return { content: [{ type: 'text', text: 'Product updated successfully' }] };
+        }
+        
+        // =====================================================================
+        // TIME TRACKING TOOLS
+        // =====================================================================
+        case 'teamleader_timetracking_list': {
+          const { subject_type, subject_id, ...rest } = args as Record<string, unknown>;
+          const filter: timetracking.TimeTrackingListFilter = { ...rest };
+          if (subject_type && subject_id) {
+            filter.subject = { type: subject_type as 'milestone' | 'ticket' | 'nextgenTask', id: subject_id as string };
+          }
+          const result = await timetracking.listTimeTracking(client, filter);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_timetracking_info': {
+          const { id } = args as { id: string };
+          const result = await timetracking.getTimeTrackingInfo(client, id);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_timetracking_add': {
+          const { subject_type, subject_id, ...rest } = args as Record<string, unknown>;
+          const input: timetracking.TimeTrackingAddInput = { ...rest as Omit<timetracking.TimeTrackingAddInput, 'subject'> };
+          if (subject_type && subject_id) {
+            input.subject = { type: subject_type as 'milestone' | 'ticket' | 'nextgenTask', id: subject_id as string };
+          }
+          const result = await timetracking.addTimeTracking(client, input);
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_timetracking_update': {
+          const input = args as timetracking.TimeTrackingUpdateInput;
+          await timetracking.updateTimeTracking(client, input);
+          return { content: [{ type: 'text', text: 'Time tracking updated successfully' }] };
+        }
+        case 'teamleader_timetracking_delete': {
+          const { id } = args as { id: string };
+          await timetracking.deleteTimeTracking(client, id);
+          return { content: [{ type: 'text', text: 'Time tracking deleted successfully' }] };
+        }
+        
+        // =====================================================================
+        // EMAIL TRACKING TOOLS
+        // =====================================================================
         case 'teamleader_email_track': {
           const input = args as email.EmailTrackingCreateInput;
           const result = await email.trackEmail(client, input);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
-        
         case 'teamleader_emails_list': {
           const filter = args as email.EmailTrackingFilter;
           const result = await email.listTrackedEmails(client, filter);
-          return {
-            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          };
+          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
         
         default:
