@@ -395,6 +395,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         deal_id: { type: 'string', description: 'Deal UUID (required)' },
+        name: { type: 'string', description: 'Quotation name/title' },
         grouped_lines: { type: 'array', description: 'Quotation line items' },
         text: { type: 'string', description: 'Quotation text (Markdown)' },
         document_template_id: { type: 'string', description: 'Document template UUID for PDF layout' },
@@ -410,6 +411,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         id: { type: 'string', description: 'Quotation UUID (required)' },
+        name: { type: 'string', description: 'Quotation name/title' },
         grouped_lines: { type: 'array', description: 'Quotation line items' },
         text: { type: 'string', description: 'Quotation text (Markdown)' },
         document_template_id: { type: 'string', description: 'Document template UUID for PDF layout' },

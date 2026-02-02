@@ -82,6 +82,7 @@ export const QuotationsListFilterSchema = z.object({
 
 export const QuotationCreateSchema = z.object({
   deal_id: z.string().uuid(),
+  name: z.string().optional(),
   currency: CurrencySchema.optional(),
   grouped_lines: z.array(GroupedLinesSchema).optional(),
   discounts: z.array(DiscountSchema).optional(),
@@ -274,6 +275,7 @@ export async function createQuotation(
     deal_id: validated.deal_id,
   };
   
+  if (validated.name) body.name = validated.name;
   if (validated.currency) body.currency = validated.currency;
   if (validated.grouped_lines) body.grouped_lines = validated.grouped_lines;
   if (validated.discounts) body.discounts = validated.discounts;
@@ -296,6 +298,7 @@ export async function updateQuotation(
   
   const body: Record<string, unknown> = { id };
   
+  if (input.name) body.name = input.name;
   if (input.currency) body.currency = input.currency;
   if (input.grouped_lines) body.grouped_lines = input.grouped_lines;
   if (input.discounts) body.discounts = input.discounts;
