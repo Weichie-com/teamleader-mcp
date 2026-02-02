@@ -397,8 +397,25 @@ const TOOLS = [
         deal_id: { type: 'string', description: 'Deal UUID (required)' },
         grouped_lines: { type: 'array', description: 'Quotation line items' },
         text: { type: 'string', description: 'Quotation text (Markdown)' },
+        document_template_id: { type: 'string', description: 'Document template UUID for PDF layout' },
+        expiry: { type: 'object', description: 'Expiry settings: {expires_after: "P30D", action_after_expiry: "lock"|"none"}' },
       },
       required: ['deal_id'],
+    },
+  },
+  {
+    name: 'teamleader_quotation_update',
+    description: 'Update an existing quotation in Teamleader Focus.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Quotation UUID (required)' },
+        grouped_lines: { type: 'array', description: 'Quotation line items' },
+        text: { type: 'string', description: 'Quotation text (Markdown)' },
+        document_template_id: { type: 'string', description: 'Document template UUID for PDF layout' },
+        expiry: { type: 'object', description: 'Expiry settings' },
+      },
+      required: ['id'],
     },
   },
   {
@@ -854,6 +871,11 @@ export function createServer(
           const input = args as quotations.QuotationCreateInput;
           const result = await quotations.createQuotation(client, input);
           return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        }
+        case 'teamleader_quotation_update': {
+          const { id, ...updateInput } = args as { id: string } & Partial<Omit<quotations.QuotationCreateInput, 'deal_id'>>;
+          await quotations.updateQuotation(client, id, updateInput);
+          return { content: [{ type: 'text', text: 'Quotation updated successfully' }] };
         }
         case 'teamleader_quotation_send': {
           const { quotation_ids, subject, content, to, language } = args as {
