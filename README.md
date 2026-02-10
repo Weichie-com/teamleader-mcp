@@ -4,6 +4,13 @@ A Model Context Protocol (MCP) server for [Teamleader Focus](https://www.teamlea
 
 This server enables AI assistants to interact with Teamleader Focus through the MCP protocol, providing tools for managing contacts, companies, deals, invoices, quotations, products, time tracking, and calendar events.
 
+## 🚀 Quick Start for Claude Desktop Users
+
+1. **Clone & Build**: `git clone https://yamebe@bitbucket.org/weichieprojects/teamleader-mcp.git && cd teamleader-mcp && npm install && npm run build`
+2. **Get Credentials**: Run `node scripts/generate-token.js` to get your OAuth tokens
+3. **Configure Claude**: See [CLAUDE_DESKTOP_SETUP.md](CLAUDE_DESKTOP_SETUP.md) for detailed setup
+4. **Start Using**: Ask Claude to manage your Teamleader data!
+
 ## Features
 
 - 🏢 **Companies** - List, create, update, and manage companies
