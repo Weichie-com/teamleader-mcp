@@ -1,442 +1,462 @@
-# Teamleader MCP Server
+<p align="center">
+  <img src="https://www.teamleader.eu/hs-fs/hubfs/Logos/logo-teamleader-focus.png" alt="Teamleader Focus" width="300">
+</p>
 
-A Model Context Protocol (MCP) server for [Teamleader Focus](https://www.teamleader.eu/) - the all-in-one CRM, invoicing, and project management platform.
+<h1 align="center">Teamleader MCP Server</h1>
 
-This server enables AI assistants to interact with Teamleader Focus through the MCP protocol, providing tools for managing contacts, companies, deals, invoices, quotations, products, time tracking, and calendar events.
+<p align="center">
+  <strong>Control Teamleader Focus with natural language through the Model Context Protocol</strong>
+</p>
 
-## 🚀 Quick Start for Claude Desktop Users
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#tools">Tools</a> •
+  <a href="#examples">Examples</a> •
+  <a href="#contributing">Contributing</a>
+</p>
 
-1. **Clone & Build**: `git clone https://yamebe@bitbucket.org/weichieprojects/teamleader-mcp.git && cd teamleader-mcp && npm install && npm run build`
-2. **Get Credentials**: Run `node scripts/generate-token.js` to get your OAuth tokens
-3. **Configure Claude**: See [CLAUDE_DESKTOP_SETUP.md](CLAUDE_DESKTOP_SETUP.md) for detailed setup
-4. **Start Using**: Ask Claude to manage your Teamleader data!
+<p align="center">
+  <img src="https://img.shields.io/badge/tools-42-blue" alt="42 Tools">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
+  <img src="https://img.shields.io/badge/MCP-compatible-purple" alt="MCP Compatible">
+  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node >= 18">
+</p>
+
+---
+
+## What is this?
+
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that connects AI assistants like Claude to [Teamleader Focus](https://www.teamleader.eu/) - the all-in-one CRM, invoicing, and project management platform.
+
+**Instead of clicking through menus, just ask:**
+
+```
+"Find all open deals for Acme Corporation"
+"Create an invoice for 20 hours of consulting at €125/hour"
+"Schedule a meeting with Sarah from TechStart next Tuesday at 2pm"
+"Log 3 hours to the website project with description: frontend development"
+```
+
+---
+
+## Screenshots
+
+<!-- TODO: Add screenshots before public launch -->
+
+<p align="center">
+  <i>🖼️ Screenshots coming soon</i>
+</p>
+
+<details>
+<summary>Screenshot placeholders</summary>
+
+| Description | Image |
+|-------------|-------|
+| Claude Desktop with deal lookup | `screenshots/deal-lookup.png` |
+| Invoice creation conversation | `screenshots/invoice-creation.png` |
+| Multi-step workflow example | `screenshots/workflow.png` |
+| Claude Desktop config | `screenshots/config.png` |
+
+</details>
+
+---
 
 ## Features
 
-- 🏢 **Companies** - List, create, update, and manage companies
-- 👥 **Contacts** - Manage your CRM contacts
-- 💼 **Deals** - Full deal pipeline management (create, move, win, lose)
-- 📄 **Invoices** - Draft, send, book, and register payments
-- 📝 **Quotations** - Create, send, accept, and manage quotations
-- 📦 **Products** - Product catalog management
-- ⏱️ **Time Tracking** - Track time and manage timers
-- 📅 **Calendar** - Event management
-- 📧 **Email Tracking** - Log emails to entities
+### 🏢 CRM
+- **Companies** - List, search, create, and update companies
+- **Contacts** - Full contact management with company linking
+- **Deals** - Pipeline management, move phases, win/lose tracking
 
-## Installation
+### 💰 Finance
+- **Invoices** - Draft, send, book, register payments
+- **Quotations** - Create, send, accept, download PDFs
+- **Products** - Product catalog management
 
-### Prerequisites
+### ⏱️ Operations
+- **Time Tracking** - Log hours, manage entries, billable tracking
+- **Calendar Events** - Create and manage meetings linked to contacts/deals
+- **Email Tracking** - Log emails to entities
 
-- Node.js 18 or higher
-- A Teamleader Focus account
-- OAuth 2.0 credentials from Teamleader Marketplace
+### 🔐 Security
+- OAuth 2.0 with automatic token refresh
+- Secure credential storage
+- Rate limiting respect
 
-### Install from npm (when published)
+---
 
+## Quick Start
+
+### For Claude Desktop Users
+
+**1. Clone & Build**
 ```bash
-npm install -g teamleader-mcp
-```
-
-### Install from source
-
-```bash
-git clone <repository>
+git clone https://github.com/your-org/teamleader-mcp.git
 cd teamleader-mcp
 npm install
 npm run build
 ```
 
-## OAuth 2.0 Setup
+**2. Get OAuth Credentials**
+```bash
+node scripts/generate-token.js
+```
+Follow the prompts to authorize with Teamleader.
 
-Before using this MCP server, you need to set up OAuth credentials:
+**3. Configure Claude Desktop**
 
-### 1. Register your integration
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+
+```json
+{
+  "mcpServers": {
+    "teamleader": {
+      "command": "node",
+      "args": ["/absolute/path/to/teamleader-mcp/dist/index.js"],
+      "env": {
+        "TEAMLEADER_ACCESS_TOKEN": "your_access_token",
+        "TEAMLEADER_CLIENT_ID": "your_client_id",
+        "TEAMLEADER_CLIENT_SECRET": "your_client_secret",
+        "TEAMLEADER_REFRESH_TOKEN": "your_refresh_token"
+      }
+    }
+  }
+}
+```
+
+**4. Start Using!**
+Restart Claude Desktop and ask: *"What Teamleader tools do you have access to?"*
+
+---
+
+## Installation
+
+### Prerequisites
+- Node.js 18 or higher
+- A Teamleader Focus account
+- OAuth 2.0 credentials from [Teamleader Marketplace](https://marketplace.focus.teamleader.eu/build)
+
+### From Source (Recommended)
+```bash
+git clone https://github.com/your-org/teamleader-mcp.git
+cd teamleader-mcp
+npm install
+npm run build
+```
+
+### From npm (Coming Soon)
+```bash
+npm install -g teamleader-mcp
+```
+
+---
+
+## OAuth Setup
+
+### 1. Register Your Integration
 
 1. Go to [Teamleader Marketplace](https://marketplace.focus.teamleader.eu/build)
 2. Create a new integration
 3. Note your `client_id` and `client_secret`
-4. Add your redirect URI (e.g., `http://localhost:3000/callback`)
-5. Select the required scopes:
-   - `contacts` - For contacts management
-   - `companies` - For companies management
-   - `deals` - For deals and quotations
-   - `invoices` - For invoices and credit notes
-   - `products` - For products catalog
-   - `timetracking` - For time tracking
-   - `events` - For calendar events
-   - `users` - For user information
+4. Set redirect URI: `http://localhost:3000/callback`
+5. Required scopes: `contacts`, `companies`, `deals`, `invoices`, `products`, `timetracking`, `events`, `users`
 
-### 2. Get an access token
+### 2. Generate Tokens
 
-Use the OAuth 2.0 authorization code flow:
+The easiest way:
+```bash
+node scripts/generate-token.js
+```
 
-1. Redirect user to:
-   ```
-   https://focus.teamleader.eu/oauth2/authorize?
-     client_id=YOUR_CLIENT_ID&
-     response_type=code&
-     redirect_uri=YOUR_REDIRECT_URI&
-     state=RANDOM_STATE
-   ```
+Or manually via OAuth authorization code flow - see [OAUTH_CLAUDE_SETUP.md](OAUTH_CLAUDE_SETUP.md).
 
-2. Exchange the authorization code for tokens:
-   ```bash
-   curl -X POST https://focus.teamleader.eu/oauth2/access_token \
-     -d "client_id=YOUR_CLIENT_ID" \
-     -d "client_secret=YOUR_CLIENT_SECRET" \
-     -d "code=AUTHORIZATION_CODE" \
-     -d "grant_type=authorization_code" \
-     -d "redirect_uri=YOUR_REDIRECT_URI"
-   ```
-
-3. You'll receive an `access_token` and `refresh_token`
-
-### 3. Configure environment
-
-Create a `.env` file (see `.env.example`):
+### 3. Configure Environment
 
 ```bash
-# Required
-TEAMLEADER_ACCESS_TOKEN=your_access_token
+cp .env.example .env
+```
 
-# Optional (for automatic token refresh)
+Edit `.env`:
+```bash
+TEAMLEADER_ACCESS_TOKEN=your_access_token
 TEAMLEADER_CLIENT_ID=your_client_id
 TEAMLEADER_CLIENT_SECRET=your_client_secret
 TEAMLEADER_REFRESH_TOKEN=your_refresh_token
-TEAMLEADER_TOKEN_STORAGE=/path/to/.teamleader-tokens.json  # Optional: custom storage path
 ```
 
-### Token Refresh
+---
 
-The server supports two modes:
+## Tools
 
-#### Static Token Mode (default)
-Set only `TEAMLEADER_ACCESS_TOKEN`. The token will be used until it expires (1 hour). You'll need to manually refresh and update the token.
+This server provides **42 tools** across all major Teamleader Focus features:
 
-#### Automatic Refresh Mode (recommended for production)
-Set all four environment variables:
-- `TEAMLEADER_CLIENT_ID` - Your OAuth client ID
-- `TEAMLEADER_CLIENT_SECRET` - Your OAuth client secret  
-- `TEAMLEADER_REFRESH_TOKEN` - Your OAuth refresh token
-- `TEAMLEADER_ACCESS_TOKEN` - Initial access token
-
-With automatic refresh enabled:
-- Tokens are refreshed 5 minutes before expiry
-- On 401 errors, refresh is attempted automatically with retry
-- New tokens are persisted to `~/.teamleader-tokens.json` (or custom path)
-- Graceful fallback: if refresh fails, error is propagated
-
-## Usage
-
-### With mcporter
-
-Add to your `mcporter.json` config file:
-
-```json
-{
-  "mcpServers": {
-    "teamleader": {
-      "command": "node",
-      "args": ["/path/to/teamleader-mcp/dist/index.js"],
-      "env": {
-        "TEAMLEADER_ACCESS_TOKEN": "your_access_token"
-      }
-    }
-  }
-}
-```
-
-> ⚠️ **Important:** The `args` field is required! Without it, mcporter won't know which script to run and the server will hang/timeout.
-
-Then test with:
-
-```bash
-mcporter list teamleader              # List available tools
-mcporter call teamleader.teamleader_deals_list status=open
-```
-
-### With Claude Desktop / Other MCP Clients
-
-Add to your MCP client configuration:
-
-```json
-{
-  "mcpServers": {
-    "teamleader": {
-      "command": "node",
-      "args": ["/path/to/teamleader-mcp/dist/index.js"],
-      "env": {
-        "TEAMLEADER_ACCESS_TOKEN": "your_access_token"
-      }
-    }
-  }
-}
-```
-
-Or if installed globally via npm:
-
-```json
-{
-  "mcpServers": {
-    "teamleader": {
-      "command": "teamleader-mcp",
-      "env": {
-        "TEAMLEADER_ACCESS_TOKEN": "your_access_token"
-      }
-    }
-  }
-}
-```
-
-### Running directly
-
-```bash
-TEAMLEADER_ACCESS_TOKEN=your_token npm start
-```
-
-## Available Tools
-
-### Companies
-
+### Companies (4 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_companies_list` | List companies with filters (name, VAT, tags, status) |
-| `teamleader_company_info` | Get company details by ID |
-| `teamleader_company_create` | Create a new company |
-| `teamleader_company_update` | Update an existing company |
+| `teamleader_companies_list` | List/search companies |
+| `teamleader_company_info` | Get company details |
+| `teamleader_company_create` | Create a company |
+| `teamleader_company_update` | Update a company |
 
-### Contacts
-
+### Contacts (2 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_contacts_list` | List contacts with filters |
-| `teamleader_contact_info` | Get contact details by ID |
+| `teamleader_contacts_list` | List/search contacts |
+| `teamleader_contact_info` | Get contact details |
 
-### Deals
-
+### Deals (7 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_deals_list` | List deals with filters (status, customer, phase) |
-| `teamleader_deal_info` | Get deal details by ID |
-| `teamleader_deal_create` | Create a new deal |
-| `teamleader_deal_update` | Update an existing deal |
-| `teamleader_deal_move` | Move deal to a different phase |
-| `teamleader_deal_win` | Mark deal as won |
-| `teamleader_deal_lose` | Mark deal as lost |
+| `teamleader_deals_list` | List deals with filters |
+| `teamleader_deal_info` | Get deal details |
+| `teamleader_deal_create` | Create a deal |
+| `teamleader_deal_update` | Update a deal |
+| `teamleader_deal_move` | Move to different phase |
+| `teamleader_deal_win` | Mark as won |
+| `teamleader_deal_lose` | Mark as lost |
 
-### Invoices
-
+### Invoices (7 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_invoices_list` | List invoices with filters |
-| `teamleader_invoice_info` | Get invoice details by ID |
-| `teamleader_invoice_draft` | Create a draft invoice |
-| `teamleader_invoice_send` | Send invoice via email |
-| `teamleader_invoice_book` | Book (finalize) a draft invoice |
-| `teamleader_invoice_delete` | Delete an invoice |
-| `teamleader_invoice_register_payment` | Register a payment |
+| `teamleader_invoices_list` | List invoices |
+| `teamleader_invoice_info` | Get invoice details |
+| `teamleader_invoice_draft` | Create draft invoice |
+| `teamleader_invoice_update` | Update invoice |
+| `teamleader_invoice_send` | Send via email |
+| `teamleader_invoice_book` | Book/finalize |
+| `teamleader_invoice_register_payment` | Register payment |
+| `teamleader_invoice_delete` | Delete invoice |
 
-### Quotations
-
+### Quotations (7 tools)
 | Tool | Description |
 |------|-------------|
 | `teamleader_quotations_list` | List quotations |
 | `teamleader_quotation_info` | Get quotation details |
-| `teamleader_quotation_create` | Create a new quotation |
-| `teamleader_quotation_send` | Send quotation via email |
-| `teamleader_quotation_accept` | Mark quotation as accepted |
-| `teamleader_quotation_delete` | Delete a quotation |
-| `teamleader_quotation_download` | Get PDF download link |
+| `teamleader_quotation_create` | Create quotation |
+| `teamleader_quotation_update` | Update quotation |
+| `teamleader_quotation_send` | Send via email |
+| `teamleader_quotation_accept` | Mark as accepted |
+| `teamleader_quotation_delete` | Delete quotation |
+| `teamleader_quotation_download` | Get PDF link |
 
-### Products
-
+### Products (4 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_products_list` | List products with filters |
+| `teamleader_products_list` | List products |
 | `teamleader_product_info` | Get product details |
-| `teamleader_product_create` | Create a new product |
-| `teamleader_product_update` | Update a product |
+| `teamleader_product_create` | Create product |
+| `teamleader_product_update` | Update product |
 
-### Time Tracking
-
+### Time Tracking (5 tools)
 | Tool | Description |
 |------|-------------|
 | `teamleader_timetracking_list` | List time entries |
-| `teamleader_timetracking_info` | Get time entry details |
-| `teamleader_timetracking_add` | Add a time entry |
-| `teamleader_timetracking_update` | Update a time entry |
-| `teamleader_timetracking_delete` | Delete a time entry |
+| `teamleader_timetracking_info` | Get entry details |
+| `teamleader_timetracking_add` | Add time entry |
+| `teamleader_timetracking_update` | Update entry |
+| `teamleader_timetracking_delete` | Delete entry |
 
-### Calendar
-
+### Calendar Events (3 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_events_list` | List calendar events |
+| `teamleader_events_list` | List events |
 | `teamleader_event_info` | Get event details |
-| `teamleader_event_create` | Create a new event |
+| `teamleader_event_create` | Create event |
 
-### Email Tracking
-
+### Email Tracking (2 tools)
 | Tool | Description |
 |------|-------------|
-| `teamleader_email_track` | Log an email to an entity |
 | `teamleader_emails_list` | List tracked emails |
+| `teamleader_email_track` | Log an email |
+
+---
 
 ## Examples
 
-### List all open deals
+### Natural Language → Actions
 
-```json
-{
-  "name": "teamleader_deals_list",
-  "arguments": {
-    "status": ["open"]
-  }
-}
+**"Find all open deals worth more than €10,000"**
+```
+→ teamleader_deals_list(status: ["open"])
+→ Filters results by value
 ```
 
-### Create a company
-
-```json
-{
-  "name": "teamleader_company_create",
-  "arguments": {
-    "name": "Acme Corporation",
-    "vat_number": "BE0123456789",
-    "emails": [{"type": "primary", "email": "info@acme.com"}],
-    "tags": ["partner", "enterprise"]
-  }
-}
+**"Create an invoice for Acme Corp: 20 hours consulting at €125/hour, 30 days payment term"**
+```
+→ teamleader_companies_list(term: "Acme Corp")
+→ teamleader_invoice_draft(customer_id: "...", grouped_lines: [...])
 ```
 
-### Create and send an invoice
-
-```json
-{
-  "name": "teamleader_invoice_draft",
-  "arguments": {
-    "customer_type": "company",
-    "customer_id": "uuid-here",
-    "department_id": "uuid-here",
-    "payment_term_type": "after_invoice_date",
-    "payment_term_days": 30,
-    "grouped_lines": [{
-      "line_items": [{
-        "quantity": 10,
-        "description": "Consulting hours",
-        "unit_price": {"amount": 100, "tax": "excluding"},
-        "tax_rate_id": "tax-rate-uuid"
-      }]
-    }]
-  }
-}
+**"Schedule a meeting with John from DataFlow next Tuesday at 2pm"**
+```
+→ teamleader_contacts_list(term: "John DataFlow")
+→ teamleader_event_create(title: "Meeting", starts_at: "...", contact_ids: [...])
 ```
 
-### Track time
-
-```json
-{
-  "name": "teamleader_timetracking_add",
-  "arguments": {
-    "started_at": "2026-01-31T09:00:00+01:00",
-    "ended_at": "2026-01-31T12:00:00+01:00",
-    "description": "Frontend development",
-    "invoiceable": true
-  }
-}
-```
-
-## Development
-
-### Build
+### Direct Tool Calls
 
 ```bash
-npm run build
+# List open deals
+mcporter call teamleader.teamleader_deals_list status='["open"]'
+
+# Get company info
+mcporter call teamleader.teamleader_company_info id="uuid-here"
+
+# Create a time entry
+mcporter call teamleader.teamleader_timetracking_add \
+  started_at="2026-01-31T09:00:00+01:00" \
+  ended_at="2026-01-31T12:00:00+01:00" \
+  description="Development work"
 ```
 
-### Test
+---
 
-```bash
-npm test           # Watch mode
-npm run test:run   # Single run
-```
+## Configuration Options
 
-### Lint
+### Environment Variables
 
-```bash
-npm run lint
-```
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TEAMLEADER_ACCESS_TOKEN` | Yes | OAuth access token |
+| `TEAMLEADER_CLIENT_ID` | No* | OAuth client ID |
+| `TEAMLEADER_CLIENT_SECRET` | No* | OAuth client secret |
+| `TEAMLEADER_REFRESH_TOKEN` | No* | OAuth refresh token |
+| `TEAMLEADER_TOKEN_STORAGE` | No | Custom token storage path |
 
-## API Reference
+*Required for automatic token refresh (recommended)
 
-This server is built on top of the [Teamleader Focus API](https://developer.teamleader.eu/). Refer to their documentation for detailed information about data structures and limitations.
+### Token Refresh Modes
 
-## Rate Limiting
+**Static Mode:** Only `ACCESS_TOKEN` set. Token expires after 1 hour. Manual refresh needed.
 
-The Teamleader API has rate limiting (200 requests per minute per integration per account). The server respects rate limit headers and will return errors if limits are exceeded.
+**Auto Refresh Mode (Recommended):** All four OAuth variables set. Tokens refresh automatically 5 minutes before expiry.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+---
 
 ## Troubleshooting
 
-### Server hangs or times out
+<details>
+<summary><strong>Server hangs or times out</strong></summary>
 
-**Symptom:** `mcporter call teamleader.*` hangs indefinitely or gets killed with SIGKILL.
-
-**Cause:** Missing `args` in your config. The config specifies `"command": "node"` but doesn't tell it *which file* to run.
-
-**Fix:** Make sure your config includes the `args` array:
+Make sure your config includes the `args` array:
 
 ```json
 {
-  "teamleader": {
-    "command": "node",
-    "args": ["/full/path/to/teamleader-mcp/dist/index.js"],  // ← Required!
-    "env": {
-      "TEAMLEADER_ACCESS_TOKEN": "..."
-    }
-  }
+  "command": "node",
+  "args": ["/path/to/teamleader-mcp/dist/index.js"]  // ← Required!
 }
 ```
+</details>
 
-### "Unknown tool" error
+<details>
+<summary><strong>"Unknown tool" error</strong></summary>
 
-**Symptom:** `MCP error -32601: Unknown tool: get-deal`
+Tool names are prefixed with `teamleader_`. Use `teamleader_deal_info`, not `get-deal`.
 
-**Cause:** Tool names in this server are prefixed with `teamleader_` (e.g., `teamleader_deal_info`, not `get-deal`).
+Run `mcporter list teamleader` to see all tools.
+</details>
 
-**Fix:** Use the correct tool names. Run `mcporter list teamleader` to see all available tools.
+<details>
+<summary><strong>401 Unauthorized</strong></summary>
 
-### Token expired
+Access tokens expire after 1 hour. Set up automatic refresh with all OAuth variables, or manually refresh your token.
+</details>
 
-**Symptom:** 401 Unauthorized errors.
+<details>
+<summary><strong>Rate limiting errors</strong></summary>
 
-**Cause:** Teamleader access tokens expire after 1 hour.
+Teamleader allows 200 requests/minute. The server respects rate limit headers. Wait and retry, or reduce request frequency.
+</details>
 
-**Fix:** Set up automatic token refresh by configuring all OAuth environment variables:
+---
+
+## Development
 
 ```bash
-TEAMLEADER_ACCESS_TOKEN=your_access_token
-TEAMLEADER_CLIENT_ID=your_client_id
-TEAMLEADER_CLIENT_SECRET=your_client_secret
-TEAMLEADER_REFRESH_TOKEN=your_refresh_token
+# Build
+npm run build
+
+# Watch mode
+npm run dev
+
+# Test
+npm test              # Watch mode
+npm run test:run      # Single run
+
+# Lint
+npm run lint
 ```
 
-With these configured, the server will:
-1. Automatically refresh tokens 5 minutes before expiry
-2. Retry failed requests after refreshing on 401 errors
-3. Persist new tokens to `~/.teamleader-tokens.json`
+---
 
-If you only have an access token, you'll need to manually refresh it using the OAuth refresh flow.
+## Contributing
 
-## Related
+We welcome contributions! Here's how to help:
+
+### Bug Reports & Feature Requests
+- Open an issue with a clear description
+- Include steps to reproduce for bugs
+- For features, explain the use case
+
+### Pull Requests
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Run tests: `npm test`
+5. Commit: `git commit -m 'Add amazing feature'`
+6. Push: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+### Code Style
+- TypeScript with strict mode
+- Prettier for formatting
+- ESLint for linting
+- Descriptive commit messages
+
+### Adding New Tools
+1. Add the tool definition in `src/tools/`
+2. Implement the handler
+3. Add tests in `tests/`
+4. Update this README
+
+---
+
+## Roadmap
+
+- [ ] npm package publication
+- [ ] Project management tools (milestones, tasks)
+- [ ] Webhook support for real-time updates
+- [ ] Batch operations
+- [ ] More filter options
+- [ ] Credit notes support
+
+See [ROADMAP.md](ROADMAP.md) for details.
+
+---
+
+## Related Resources
 
 - [Teamleader Focus API Documentation](https://developer.teamleader.eu/)
 - [Model Context Protocol](https://modelcontextprotocol.io/)
 - [Teamleader Marketplace](https://marketplace.focus.teamleader.eu/)
+- [Claude Desktop](https://claude.ai/download)
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file.
+
+---
+
+## Acknowledgments
+
+Built with ❤️ using the [Model Context Protocol](https://modelcontextprotocol.io/) by Anthropic.
+
+---
+
+<p align="center">
+  <sub>Made by <a href="https://weichie.com">Weichie</a> • Star ⭐ if you find this useful!</sub>
+</p>
