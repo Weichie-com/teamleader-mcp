@@ -271,7 +271,7 @@ const TOOLS = [
   // ============================================================================
   {
     name: 'teamleader_invoices_list',
-    description: 'List invoices from Teamleader Focus. Can filter by status, customer, or date.',
+    description: 'List invoices from Teamleader Focus. Can filter by status, customer, or date. Returns max 100 per page.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -281,6 +281,8 @@ const TOOLS = [
         invoice_date_before: { type: 'string', description: 'Filter by date (YYYY-MM-DD)' },
         customer_type: { type: 'string', enum: ['contact', 'company'] },
         customer_id: { type: 'string', description: 'Customer UUID' },
+        page_size: { type: 'number', description: 'Items per page (max 100)', minimum: 1, maximum: 100 },
+        page_number: { type: 'number', description: 'Page number (starts at 1)', minimum: 1 },
       },
     },
   },
@@ -803,12 +805,25 @@ export function createServer(
         // INVOICES TOOLS
         // =====================================================================
         case 'teamleader_invoices_list': {
-          const { customer_type, customer_id, ...rest } = args as Record<string, unknown>;
+          const { customer_type, customer_id, page_size, page_number, ...rest } = args as Record<string, unknown>;
           const filter: invoices.InvoicesListFilter = { ...rest };
+          
+          // Fix: Convert string status to array if needed
+          if (filter.status && typeof filter.status === 'string') {
+            filter.status = [filter.status as ('draft' | 'outstanding' | 'matched')];
+          }
+          
           if (customer_type && customer_id) {
             filter.customer = { type: customer_type as 'contact' | 'company', id: customer_id as string };
           }
-          const result = await invoices.listInvoices(client, filter);
+          
+          // Add pagination if provided
+          const page = (page_size || page_number) ? {
+            size: page_size as number || 20,
+            number: page_number as number || 1
+          } : undefined;
+          
+          const result = await invoices.listInvoices(client, filter, page);
           return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
         }
         case 'teamleader_invoice_info': {
