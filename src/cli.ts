@@ -313,8 +313,21 @@ auth
 
 // If no arguments provided, start the MCP server
 if (process.argv.length <= 2) {
-  // Dynamic import to avoid loading server code for CLI commands
-  import('./index.js');
+  const { startServer } = await import('./server.js');
+  const { createTokenManagerFromEnv, createTokenManagerFromStoredCredentials } = await import('./auth/token-manager.js');
+
+  let tokenManager = createTokenManagerFromEnv();
+  if (!tokenManager) {
+    tokenManager = await createTokenManagerFromStoredCredentials();
+  }
+
+  if (!tokenManager) {
+    console.error('Error: No Teamleader credentials found.');
+    console.error('Run: teamleader-mcp auth');
+    process.exit(1);
+  }
+
+  await startServer(tokenManager);
 } else {
   program.parse();
 }

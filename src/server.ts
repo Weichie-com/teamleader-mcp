@@ -645,7 +645,15 @@ export function createServer(
   const server = new Server(
     {
       name: 'teamleader-mcp',
-      version: '1.0.0',
+      title: 'Teamleader Focus',
+      version: '1.0.3',
+      websiteUrl: 'https://github.com/Weichie-com/teamleader-mcp',
+      icons: [
+        {
+          src: 'https://focus.teamleader.eu/favicon.ico',
+          mimeType: 'image/x-icon',
+        },
+      ],
     },
     {
       capabilities: {
