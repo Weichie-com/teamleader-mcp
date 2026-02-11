@@ -28,6 +28,7 @@ export const EventCreateSchema = z.object({
   title: z.string().min(1).describe('Event title'),
   starts_at: z.string().describe('Start datetime (ISO 8601)'),
   ends_at: z.string().describe('End datetime (ISO 8601)'),
+  activity_type_id: z.string().uuid().optional().describe('Activity type ID (required for some Teamleader setups)'),
   description: z.string().optional().describe('Event description'),
   location: z.string().optional().describe('Event location'),
   attendee_ids: z.array(z.string().uuid()).optional().describe('User IDs of attendees'),
@@ -158,6 +159,11 @@ export async function createEvent(
     starts_at: validated.starts_at,
     ends_at: validated.ends_at,
   };
+  
+  // Add activity_type_id if provided
+  if (validated.activity_type_id) {
+    body.activity_type_id = validated.activity_type_id;
+  }
   
   if (validated.description) {
     body.description = validated.description;

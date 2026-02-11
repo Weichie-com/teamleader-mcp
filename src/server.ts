@@ -67,6 +67,7 @@ const TOOLS = [
         title: { type: 'string', description: 'Event title' },
         starts_at: { type: 'string', description: 'Start datetime (ISO 8601)' },
         ends_at: { type: 'string', description: 'End datetime (ISO 8601)' },
+        activity_type_id: { type: 'string', description: 'Activity type ID (required for some Teamleader setups)' },
         description: { type: 'string', description: 'Event description' },
         location: { type: 'string', description: 'Event location' },
         contact_ids: { type: 'array', items: { type: 'string' }, description: 'Contact UUIDs to link' },
