@@ -227,6 +227,13 @@ export class TokenManager {
   setExpired(): void {
     this.expiresAt = 0;
   }
+
+  /**
+   * Set the expiry timestamp directly
+   */
+  setExpiresAt(timestamp: number): void {
+    this.expiresAt = timestamp;
+  }
   
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -238,11 +245,11 @@ export class TokenManager {
  */
 export function createTokenManagerFromEnv(): TokenManager | null {
   const accessToken = process.env.TEAMLEADER_ACCESS_TOKEN;
-  
+
   if (!accessToken) {
     return null;
   }
-  
+
   return new TokenManager({
     accessToken,
     clientId: process.env.TEAMLEADER_CLIENT_ID,
@@ -250,4 +257,52 @@ export function createTokenManagerFromEnv(): TokenManager | null {
     refreshToken: process.env.TEAMLEADER_REFRESH_TOKEN,
     tokenStoragePath: process.env.TEAMLEADER_TOKEN_STORAGE,
   });
+}
+
+/**
+ * Create a TokenManager from stored CLI credentials (~/.teamleader-mcp/)
+ */
+export async function createTokenManagerFromStoredCredentials(): Promise<TokenManager | null> {
+  const home = process.env.HOME || process.env.USERPROFILE || '/tmp';
+  const configDir = path.join(home, '.teamleader-mcp');
+  const credentialsFile = path.join(configDir, 'credentials.json');
+  const configFile = path.join(configDir, 'config.json');
+
+  let credentials: { accessToken: string; refreshToken: string; expiresAt?: number } | null = null;
+  try {
+    const data = await fs.readFile(credentialsFile, 'utf-8');
+    credentials = JSON.parse(data);
+  } catch {
+    return null;
+  }
+
+  if (!credentials?.accessToken) {
+    return null;
+  }
+
+  let clientId: string | undefined;
+  let clientSecret: string | undefined;
+  try {
+    const data = await fs.readFile(configFile, 'utf-8');
+    const config = JSON.parse(data);
+    clientId = config.clientId;
+    clientSecret = config.clientSecret;
+  } catch {
+    // No config file - refresh won't be available
+  }
+
+  const manager = new TokenManager({
+    accessToken: credentials.accessToken,
+    refreshToken: credentials.refreshToken,
+    clientId,
+    clientSecret,
+    tokenStoragePath: credentialsFile,
+  });
+
+  if (credentials.expiresAt) {
+    manager.setExpiresAt(credentials.expiresAt);
+  }
+
+  console.error('[TokenManager] Loaded credentials from ~/.teamleader-mcp/');
+  return manager;
 }

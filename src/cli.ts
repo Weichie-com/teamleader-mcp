@@ -11,6 +11,7 @@
 import { Command } from 'commander';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as readline from 'readline';
 import { getAuthorizationUrl, type OAuthConfig } from './auth/oauth.js';
 import { startAuthServer } from './auth/auth-server.js';
 
@@ -62,13 +63,35 @@ function warn(msg: string) {
 }
 
 /**
- * Get OAuth config from environment variables or config file
+ * Prompt user for input
+ */
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
+/**
+ * Save OAuth config to file
+ */
+async function saveConfig(config: Config): Promise<void> {
+  await fs.mkdir(CONFIG_DIR, { recursive: true });
+  await fs.writeFile(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+  await fs.chmod(CONFIG_FILE, 0o600);
+}
+
+/**
+ * Get OAuth config from environment variables, config file, or interactive prompt
  */
 async function getOAuthConfig(): Promise<OAuthConfig | null> {
   // First try environment variables
   const envClientId = process.env.TEAMLEADER_CLIENT_ID;
   const envClientSecret = process.env.TEAMLEADER_CLIENT_SECRET;
-  
+
   if (envClientId && envClientSecret) {
     return {
       clientId: envClientId,
@@ -76,12 +99,12 @@ async function getOAuthConfig(): Promise<OAuthConfig | null> {
       redirectUri: process.env.TEAMLEADER_REDIRECT_URI || DEFAULT_REDIRECT_URI,
     };
   }
-  
+
   // Try config file
   try {
     const data = await fs.readFile(CONFIG_FILE, 'utf-8');
     const config: Config = JSON.parse(data);
-    
+
     if (config.clientId && config.clientSecret) {
       return {
         clientId: config.clientId,
@@ -92,8 +115,33 @@ async function getOAuthConfig(): Promise<OAuthConfig | null> {
   } catch {
     // Config file doesn't exist
   }
-  
-  return null;
+
+  // Interactive prompt
+  info('No OAuth configuration found. Let\'s set it up!\n');
+  console.log(`${colors.dim}You can get these from: https://marketplace.focus.teamleader.eu/build${colors.reset}\n`);
+
+  const clientId = await prompt(`${colors.cyan}Client ID:${colors.reset} `);
+  if (!clientId) {
+    error('Client ID is required.');
+    return null;
+  }
+
+  const clientSecret = await prompt(`${colors.cyan}Client Secret:${colors.reset} `);
+  if (!clientSecret) {
+    error('Client Secret is required.');
+    return null;
+  }
+
+  // Save for future use
+  const config: Config = { clientId, clientSecret, redirectUri: DEFAULT_REDIRECT_URI };
+  await saveConfig(config);
+  success(`Config saved to ${CONFIG_FILE}\n`);
+
+  return {
+    clientId,
+    clientSecret,
+    redirectUri: DEFAULT_REDIRECT_URI,
+  };
 }
 
 /**
@@ -163,18 +211,9 @@ auth
     console.log(`\n${colors.bright}🔐 Teamleader Focus Authentication${colors.reset}\n`);
     
     const config = await getOAuthConfig();
-    
+
     if (!config) {
-      error('No OAuth configuration found.\n');
-      console.log('Configure via environment variables:');
-      console.log(`  ${colors.dim}export TEAMLEADER_CLIENT_ID="your-client-id"${colors.reset}`);
-      console.log(`  ${colors.dim}export TEAMLEADER_CLIENT_SECRET="your-client-secret"${colors.reset}`);
-      console.log('');
-      console.log(`Or create a config file at: ${colors.cyan}${CONFIG_FILE}${colors.reset}`);
-      console.log(`  ${colors.dim}{`);
-      console.log(`    "clientId": "your-client-id",`);
-      console.log(`    "clientSecret": "your-client-secret"`);
-      console.log(`  }${colors.reset}\n`);
+      error('Setup cancelled.\n');
       process.exit(1);
     }
     

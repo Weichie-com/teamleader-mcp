@@ -1,44 +1,44 @@
 #!/usr/bin/env node
 /**
  * Teamleader Focus MCP Server
- * 
+ *
  * Entry point for the MCP server. Reads configuration from
- * environment variables and starts the server.
- * 
- * Supports two modes:
- * 1. Static token - Set TEAMLEADER_ACCESS_TOKEN only (no refresh)
- * 2. OAuth refresh - Set CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN for auto-refresh
+ * environment variables or stored CLI credentials.
+ *
+ * Priority:
+ * 1. Environment variables (TEAMLEADER_ACCESS_TOKEN, etc.)
+ * 2. Stored credentials from `npx teamleader-mcp auth` (~/.teamleader-mcp/)
  */
 
 import { startServer } from './server.js';
-import { createTokenManagerFromEnv } from './auth/token-manager.js';
+import { createTokenManagerFromEnv, createTokenManagerFromStoredCredentials } from './auth/token-manager.js';
 
-// Read configuration from environment
-const tokenManager = createTokenManagerFromEnv();
+async function main() {
+  // Try environment variables first
+  let tokenManager = createTokenManagerFromEnv();
 
-if (!tokenManager) {
-  console.error('Error: TEAMLEADER_ACCESS_TOKEN environment variable is required');
-  console.error('');
-  console.error('Required:');
-  console.error('  TEAMLEADER_ACCESS_TOKEN - Your Teamleader access token');
-  console.error('');
-  console.error('Optional (for automatic token refresh):');
-  console.error('  TEAMLEADER_CLIENT_ID     - OAuth client ID');
-  console.error('  TEAMLEADER_CLIENT_SECRET - OAuth client secret');
-  console.error('  TEAMLEADER_REFRESH_TOKEN - OAuth refresh token');
-  console.error('  TEAMLEADER_TOKEN_STORAGE - Path to token storage file');
-  console.error('');
-  console.error('To obtain credentials:');
-  console.error('1. Register your integration at https://marketplace.focus.teamleader.eu/build');
-  console.error('2. Complete the OAuth 2.0 authorization flow');
-  console.error('3. Set the environment variables');
-  console.error('');
-  console.error('See README.md for detailed setup instructions.');
-  process.exit(1);
+  // Fall back to stored CLI credentials
+  if (!tokenManager) {
+    tokenManager = await createTokenManagerFromStoredCredentials();
+  }
+
+  if (!tokenManager) {
+    console.error('Error: No Teamleader credentials found.');
+    console.error('');
+    console.error('Run this first to authenticate:');
+    console.error('  npx teamleader-mcp auth');
+    console.error('');
+    console.error('Or set environment variables:');
+    console.error('  TEAMLEADER_ACCESS_TOKEN, TEAMLEADER_CLIENT_ID,');
+    console.error('  TEAMLEADER_CLIENT_SECRET, TEAMLEADER_REFRESH_TOKEN');
+    console.error('');
+    process.exit(1);
+  }
+
+  await startServer(tokenManager);
 }
 
-// Start the server with token manager
-startServer(tokenManager).catch((error) => {
+main().catch((error) => {
   console.error('Failed to start server:', error);
   process.exit(1);
 });
