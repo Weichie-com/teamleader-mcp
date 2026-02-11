@@ -311,5 +311,10 @@ auth
     success('Credentials cleared.\n');
   });
 
-// Parse and execute
-program.parse();
+// If no arguments provided, start the MCP server
+if (process.argv.length <= 2) {
+  // Dynamic import to avoid loading server code for CLI commands
+  import('./index.js');
+} else {
+  program.parse();
+}
