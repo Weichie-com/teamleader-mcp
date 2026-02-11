@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="https://www.npmjs.com/package/teamleader-mcp"><img src="https://img.shields.io/npm/v/teamleader-mcp" alt="npm version"></a>
   <img src="https://img.shields.io/badge/tools-42-blue" alt="42 Tools">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
   <img src="https://img.shields.io/badge/MCP-compatible-purple" alt="MCP Compatible">
@@ -89,23 +90,15 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that c
 
 ## Quick Start
 
-### For Claude Desktop Users
+### 1. Authenticate with Teamleader
 
-**1. Clone & Build**
 ```bash
-git clone https://github.com/your-org/teamleader-mcp.git
-cd teamleader-mcp
-npm install
-npm run build
+npx teamleader-mcp auth
 ```
 
-**2. Get OAuth Credentials**
-```bash
-node scripts/generate-token.js
-```
-Follow the prompts to authorize with Teamleader.
+This opens a browser for OAuth login. Your credentials are saved automatically.
 
-**3. Configure Claude Desktop**
+### 2. Configure Claude Desktop
 
 Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
@@ -113,20 +106,15 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 {
   "mcpServers": {
     "teamleader": {
-      "command": "node",
-      "args": ["/absolute/path/to/teamleader-mcp/dist/index.js"],
-      "env": {
-        "TEAMLEADER_ACCESS_TOKEN": "your_access_token",
-        "TEAMLEADER_CLIENT_ID": "your_client_id",
-        "TEAMLEADER_CLIENT_SECRET": "your_client_secret",
-        "TEAMLEADER_REFRESH_TOKEN": "your_refresh_token"
-      }
+      "command": "npx",
+      "args": ["-y", "teamleader-mcp"]
     }
   }
 }
 ```
 
-**4. Start Using!**
+### 3. Start Using!
+
 Restart Claude Desktop and ask: *"What Teamleader tools do you have access to?"*
 
 ---
@@ -138,17 +126,25 @@ Restart Claude Desktop and ask: *"What Teamleader tools do you have access to?"*
 - A Teamleader Focus account
 - OAuth 2.0 credentials from [Teamleader Marketplace](https://marketplace.focus.teamleader.eu/build)
 
-### From Source (Recommended)
+### Via npx (Recommended)
+No installation needed - runs directly:
 ```bash
-git clone https://github.com/your-org/teamleader-mcp.git
+npx teamleader-mcp auth    # One-time OAuth setup
+npx teamleader-mcp          # Start the MCP server
+```
+
+### Global Install
+```bash
+npm install -g teamleader-mcp
+teamleader-mcp auth
+```
+
+### From Source
+```bash
+git clone https://github.com/Weichie-com/teamleader-mcp.git
 cd teamleader-mcp
 npm install
 npm run build
-```
-
-### From npm (Coming Soon)
-```bash
-npm install -g teamleader-mcp
 ```
 
 ---
@@ -425,7 +421,7 @@ We welcome contributions! Here's how to help:
 
 ## Roadmap
 
-- [ ] npm package publication
+- [x] npm package publication
 - [ ] Project management tools (milestones, tasks)
 - [ ] Webhook support for real-time updates
 - [ ] Batch operations

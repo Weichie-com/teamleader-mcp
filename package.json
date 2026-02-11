@@ -8,6 +8,12 @@
   "bin": {
     "teamleader-mcp": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -15,7 +21,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -23,10 +30,23 @@
     "focus",
     "api",
     "calendar",
-    "contacts"
+    "contacts",
+    "crm",
+    "invoicing",
+    "model-context-protocol",
+    "claude",
+    "ai"
   ],
-  "author": "",
+  "author": "Weichie.com",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Weichie-com/teamleader-mcp.git"
+  },
+  "homepage": "https://github.com/Weichie-com/teamleader-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/Weichie-com/teamleader-mcp/issues"
+  },
   "engines": {
     "node": ">=18"
   },
